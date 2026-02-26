@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAgentStore, type AgentNodeId, type AgentMessage } from "@/store/agent-store";
 import { useRepoStore } from "@/store/repo-store";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/lib/api-config";
 
 // ── Node labels ──────────────────────────────────────────────────────────────
 
@@ -63,6 +64,8 @@ export default function AgentPanel() {
     totalEdits,
     totalDiffs,
     tokensUsed,
+    inputLanguage,
+    setInputLanguage,
     runAgent,
     stopAgent,
     clearHistory,
@@ -82,7 +85,7 @@ export default function AgentPanel() {
     if (!input.trim() || running) return;
     const goal = input.trim();
     setInput("");
-    await runAgent(goal);
+    await runAgent(goal, inputLanguage);
     // Reload the repo file list after agent finishes
     await loadRepo();
   };
@@ -185,12 +188,47 @@ export default function AgentPanel() {
 
       {/* Input */}
       <div className="agent-input-area">
+        {/* Language selector row */}
+        <div className="agent-language-row">
+          <label className="agent-language-label">
+            🌐 Language:
+          </label>
+          <select
+            className="agent-language-select"
+            value={inputLanguage}
+            onChange={(e) => setInputLanguage(e.target.value as SupportedLanguage)}
+            disabled={running}
+          >
+            {Object.entries(SUPPORTED_LANGUAGES).map(([code, langInfo]) => (
+              <option key={code} value={code}>
+                {langInfo.nativeName} ({langInfo.name})
+              </option>
+            ))}
+          </select>
+          {inputLanguage !== "en" && (
+            <span className="agent-language-hint">
+              Responses will be translated to {SUPPORTED_LANGUAGES[inputLanguage].name}
+            </span>
+          )}
+        </div>
+        
+        {/* TODO: Voice Input - AI4Bharat Saaras ASR Integration
+         * Future implementation:
+         * - Add microphone button next to textarea
+         * - Use MediaRecorder API to capture audio
+         * - Send to AI4Bharat Saaras ASR endpoint for transcription
+         * - Auto-detect language from speech
+         * - Ref: https://ai4bharat.iitm.ac.in/saaras
+         */}
+        
         <div className="agent-input-row">
           <textarea
             className="agent-text-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Describe what you want to build or change…"
+            placeholder={inputLanguage === "en" 
+              ? "Describe what you want to build or change…" 
+              : `Type in ${SUPPORTED_LANGUAGES[inputLanguage].name} or English…`}
             rows={1}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {

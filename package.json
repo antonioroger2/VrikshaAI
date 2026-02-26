@@ -16,6 +16,10 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "tree-sitter-python": "^0.25.0",
+    "tree-sitter-typescript": "^0.23.2",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.26.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
