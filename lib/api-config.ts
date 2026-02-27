@@ -73,6 +73,12 @@ export const API_CONFIG = {
     baseUrl: process.env.NEXT_PUBLIC_DYNAMODB_BASE_URL || 'https://dynamodb.aws.com',
     apiKey: process.env.NEXT_PUBLIC_DYNAMODB_API_KEY || '',
   },
+
+  // Upstash Redis - Rate limiting and queuing
+  upstashRedis: {
+    baseUrl: process.env.UPSTASH_REDIS_REST_URL || '',
+    token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
+  },
 } as const;
 
 // ── Supported Languages ──────────────────────────────────────────────────────
