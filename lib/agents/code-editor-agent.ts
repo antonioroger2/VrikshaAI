@@ -10,7 +10,7 @@
  */
 
 import { API_CONFIG, isAPIConfigured } from '../api-config';
-import { withRetries } from '../utils';
+import { withSmartRetries } from '../utils';
 import type {
   VrikshaState,
   PlanStep,
@@ -264,7 +264,8 @@ export async function generateCodeEdit(
   filePath: string,
   originalContent: string,
   planStep: PlanStep,
-  language: string
+  language: string,
+  onStatus?: (msg: string) => void
 ): Promise<UnifiedDiff> {
   // Extract symbols from the file using tree-sitter AST (falls back to regex)
   const symbols = await extractSymbolsAST(originalContent, language);
@@ -299,9 +300,15 @@ Generate a unified diff to make this change. Include 3 lines of context.`;
 
   let diffOutput: string | null = null;
 
+  const estimatedTokens = estimateTokens(prompt) + 1500;
+
   if (isAPIConfigured('qwen')) {
     try {
-      diffOutput = await withRetries(() => callQwenCoder(getCodeEditorPrompt(language), prompt));
+      diffOutput = await withSmartRetries(
+        'qwen', estimatedTokens,
+        () => callQwenCoder(getCodeEditorPrompt(language), prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Qwen API exhausted retries...', e);
     }
@@ -309,7 +316,11 @@ Generate a unified diff to make this change. Include 3 lines of context.`;
 
   if (!diffOutput && isAPIConfigured('groq')) {
     try {
-      diffOutput = await withRetries(() => callGroqForCode(getCodeEditorPrompt(language), prompt));
+      diffOutput = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroqForCode(getCodeEditorPrompt(language), prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq API exhausted retries...', e);
     }
@@ -345,7 +356,8 @@ Generate a unified diff to make this change. Include 3 lines of context.`;
 export async function generateNewFile(
   filePath: string,
   planStep: PlanStep,
-  existingContext?: string
+  existingContext?: string,
+  onStatus?: (msg: string) => void
 ): Promise<string> {
   const ext = filePath.split('.').pop() || '';
   const language = getLanguageFromExtension(ext);
@@ -361,9 +373,15 @@ Generate production-ready code following best practices.`;
 
   let code: string | null = null;
 
+  const estimatedTokens = estimateTokens(prompt) + 2000;
+
   if (isAPIConfigured('qwen')) {
     try {
-      code = await withRetries(() => callQwenCoder(FILE_GENERATION_PROMPT, prompt, 0.5));
+      code = await withSmartRetries(
+        'qwen', estimatedTokens,
+        () => callQwenCoder(FILE_GENERATION_PROMPT, prompt, 0.5),
+        onStatus
+      );
     } catch (e) {
       console.warn('Qwen API exhausted retries for new file...', e);
     }
@@ -371,7 +389,11 @@ Generate production-ready code following best practices.`;
 
   if (!code && isAPIConfigured('groq')) {
     try {
-      code = await withRetries(() => callGroqForCode(FILE_GENERATION_PROMPT, prompt));
+      code = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroqForCode(FILE_GENERATION_PROMPT, prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq API exhausted retries for new file...', e);
     }
@@ -425,7 +447,10 @@ function getLanguageFromExtension(ext: string): string {
 /**
  * Execute the Code Editor Node
  */
-export async function executeCodeEditorNode(state: VrikshaState): Promise<NodeExecutionResult> {
+export async function executeCodeEditorNode(
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   try {
     const { plan, currentStepIndex, codebase } = state;
 
@@ -445,11 +470,11 @@ export async function executeCodeEditorNode(state: VrikshaState): Promise<NodeEx
       // Edit existing file
       const file = codebase.files[step.file];
       if (file) {
-        diff = await generateCodeEdit(step.file, file.content, step, file.language);
+        diff = await generateCodeEdit(step.file, file.content, step, file.language, onStatus);
         tokensUsed = estimateTokens(file.content) + estimateTokens(diff.patchedContent);
       } else {
         // File doesn't exist, create it instead
-        const content = await generateNewFile(step.file, step);
+        const content = await generateNewFile(step.file, step, undefined, onStatus);
         diff = {
           filePath: step.file,
           originalContent: '',
@@ -461,7 +486,7 @@ export async function executeCodeEditorNode(state: VrikshaState): Promise<NodeEx
       }
     } else if (step.action === 'create') {
       // Create new file
-      const content = await generateNewFile(step.file, step);
+      const content = await generateNewFile(step.file, step, undefined, onStatus);
       diff = {
         filePath: step.file,
         originalContent: '',

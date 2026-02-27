@@ -31,12 +31,15 @@ let abortController: AbortController | null = null;
 
 // ── Node Executor Type ───────────────────────────────────────────────────────
 
-type NodeExecutor = (state: VrikshaState) => Promise<NodeExecutionResult>;
+type NodeExecutor = (
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
+) => Promise<NodeExecutionResult>;
 
 // ── Node Executors Map ───────────────────────────────────────────────────────
 
 const nodeExecutors: Record<LangGraphNodeId, NodeExecutor> = {
-  idle: async (state) => ({
+  idle: async (state, _onStatus) => ({
     success: true,
     nextNode: 'idle',
     stateUpdates: {},
@@ -51,7 +54,7 @@ const nodeExecutors: Record<LangGraphNodeId, NodeExecutor> = {
   deployment: executeDeploymentNode,
   responding: executeRespondingNode,
 
-  error: async (state) => ({
+  error: async (state, _onStatus) => ({
     success: false,
     nextNode: 'idle',
     stateUpdates: {},
@@ -65,7 +68,7 @@ const nodeExecutors: Record<LangGraphNodeId, NodeExecutor> = {
  * Node 1: Vernacular Q/A Pipeline (Ingestion)
  * Handles voice transcription and translation to English
  */
-async function executeIngestionNode(state: VrikshaState): Promise<NodeExecutionResult> {
+async function executeIngestionNode(state: VrikshaState, onStatus?: (msg: string) => void): Promise<NodeExecutionResult> {
   try {
     const { rawInput, inputLanguage } = state;
 
@@ -89,8 +92,8 @@ async function executeIngestionNode(state: VrikshaState): Promise<NodeExecutionR
       translatedText = translated.translatedText;
     }
 
-    // Classify intent
-    const intent = await classifyIntent(translatedText);
+    // Classify intent inside ingestion so onStatus can flow through
+    const intent = await classifyIntent(translatedText, onStatus);
 
     return {
       success: true,
@@ -119,7 +122,10 @@ async function executeIngestionNode(state: VrikshaState): Promise<NodeExecutionR
 /**
  * Vector search for relevant code context using Nomic Embed Code
  */
-async function executeRetrievalNode(state: VrikshaState): Promise<NodeExecutionResult> {
+async function executeRetrievalNode(
+  state: VrikshaState,
+  _onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   try {
     const { plan, currentStepIndex, codebase, translatedText } = state;
 
@@ -184,7 +190,10 @@ async function executeRetrievalNode(state: VrikshaState): Promise<NodeExecutionR
 /**
  * Tree-sitter AST extraction for targeted code editing
  */
-async function executeAstParsingNode(state: VrikshaState): Promise<NodeExecutionResult> {
+async function executeAstParsingNode(
+  state: VrikshaState,
+  _onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   // AST parsing is now integrated into the code-editor-agent
   // This node is kept for explicit AST operations if needed
   return {
@@ -200,7 +209,10 @@ async function executeAstParsingNode(state: VrikshaState): Promise<NodeExecution
  * Node 5: CI/CD & Production Deployment
  * Triggers deployment pipeline (future implementation)
  */
-async function executeDeploymentNode(state: VrikshaState): Promise<NodeExecutionResult> {
+async function executeDeploymentNode(
+  state: VrikshaState,
+  _onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   // TODO: Implement actual deployment trigger
   // This would call AWS Lambda to execute Terraform
   return {
@@ -216,7 +228,10 @@ async function executeDeploymentNode(state: VrikshaState): Promise<NodeExecution
 /**
  * Generate final response to user in their language
  */
-async function executeRespondingNode(state: VrikshaState): Promise<NodeExecutionResult> {
+async function executeRespondingNode(
+  state: VrikshaState,
+  _onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   // Response is compiled from previous nodes' userMessages
   // This node handles any final translation if needed
   return {
@@ -323,8 +338,12 @@ export function createOrchestrator(
           throw new Error(`Unknown node: ${state.currentNode}`);
         }
 
+        // Build onStatus closure — forwards rate-limit messages to the UI
+        const onStatus = (msg: string) =>
+          onNodeChangeCallback?.(state.currentNode, msg);
+
         // Execute current node
-        const result = await executor(state);
+        const result = await executor(state, onStatus);
 
         // Update state
         state = updateState(state, {

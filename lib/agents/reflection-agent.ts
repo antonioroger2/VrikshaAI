@@ -9,7 +9,7 @@
  */
 
 import { API_CONFIG, isAPIConfigured, SUPPORTED_LANGUAGES, type SupportedLanguage } from '../api-config';
-import { withRetries } from '../utils';
+import { withSmartRetries } from '../utils';
 import type {
   VrikshaState,
   UnifiedDiff,
@@ -193,7 +193,10 @@ export interface CodeReviewResult {
 /**
  * Review code changes for best practices and errors
  */
-export async function reviewCode(diff: UnifiedDiff): Promise<CodeReviewResult> {
+export async function reviewCode(
+  diff: UnifiedDiff,
+  onStatus?: (msg: string) => void
+): Promise<CodeReviewResult> {
   const prompt = `Review this code change:
 
 File: ${diff.filePath}
@@ -212,9 +215,15 @@ ${diff.patchedContent}
 
   let response: string | null = null;
 
+  const estimatedTokens = estimateTokens(diff.diff + diff.patchedContent) + 500;
+
   if (isAPIConfigured('gemini')) {
     try {
-      response = await withRetries(() => callGemini(CODE_REVIEW_PROMPT, prompt));
+      response = await withSmartRetries(
+        'gemini', estimatedTokens,
+        () => callGemini(CODE_REVIEW_PROMPT, prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Gemini API exhausted retries...', e);
     }
@@ -222,7 +231,11 @@ ${diff.patchedContent}
 
   if (!response && isAPIConfigured('groq')) {
     try {
-      response = await withRetries(() => callGroqForReview(CODE_REVIEW_PROMPT, prompt));
+      response = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroqForReview(CODE_REVIEW_PROMPT, prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq API exhausted retries...', e);
     }
@@ -261,7 +274,8 @@ ${diff.patchedContent}
  * Generate "Samjhao" (explanation) documentation in user's language
  */
 export async function generateSamjhao(
-  state: VrikshaState
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
 ): Promise<string> {
   const { pendingDiffs, inputLanguage, plan } = state;
 
@@ -287,9 +301,15 @@ Please explain these changes in ${languageInfo.nativeName}.`;
 
   let samjhao: string | null = null;
 
+  const estimatedTokens = estimateTokens(userPrompt) + 1000;
+
   if (isAPIConfigured('gemini')) {
     try {
-      samjhao = await withRetries(() => callGemini(prompt, userPrompt));
+      samjhao = await withSmartRetries(
+        'gemini', estimatedTokens,
+        () => callGemini(prompt, userPrompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Gemini API exhausted retries for Samjhao...', e);
     }
@@ -297,7 +317,11 @@ Please explain these changes in ${languageInfo.nativeName}.`;
 
   if (!samjhao && isAPIConfigured('groq')) {
     try {
-      samjhao = await withRetries(() => callGroqForReview(prompt, userPrompt));
+      samjhao = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroqForReview(prompt, userPrompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq API exhausted retries for Samjhao...', e);
     }
@@ -316,7 +340,8 @@ Please explain these changes in ${languageInfo.nativeName}.`;
  * Generate deployment documentation in English
  */
 export async function generateDeploymentDocs(
-  state: VrikshaState
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
 ): Promise<string> {
   const { pendingDiffs, plan, codebase } = state;
 
@@ -334,9 +359,15 @@ ${filesContext}`;
 
   let docs: string | null = null;
 
+  const estimatedTokens = estimateTokens(prompt) + 1500;
+
   if (isAPIConfigured('gemini')) {
     try {
-      docs = await withRetries(() => callGemini(DEPLOYMENT_DOCS_PROMPT, prompt));
+      docs = await withSmartRetries(
+        'gemini', estimatedTokens,
+        () => callGemini(DEPLOYMENT_DOCS_PROMPT, prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Gemini API exhausted retries for deployment docs...', e);
     }
@@ -344,7 +375,11 @@ ${filesContext}`;
 
   if (!docs && isAPIConfigured('groq')) {
     try {
-      docs = await withRetries(() => callGroqForReview(DEPLOYMENT_DOCS_PROMPT, prompt));
+      docs = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroqForReview(DEPLOYMENT_DOCS_PROMPT, prompt),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq API exhausted retries for deployment docs...', e);
     }
@@ -426,7 +461,10 @@ function getLanguageFromPath(path: string): string {
 /**
  * Execute the Reflection Node
  */
-export async function executeReflectionNode(state: VrikshaState): Promise<NodeExecutionResult> {
+export async function executeReflectionNode(
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   try {
     const { pendingDiffs } = state;
 
@@ -445,9 +483,9 @@ export async function executeReflectionNode(state: VrikshaState): Promise<NodeEx
     let tokensUsed = 0;
 
     for (const diff of pendingDiffs) {
-      const review = await reviewCode(diff);
+      const review = await reviewCode(diff, onStatus);
       reviews.push(review);
-      tokensUsed += estimateTokens(diff.diff) + 500; // Estimate for review
+      tokensUsed += estimateTokens(diff.diff) + 500;
 
       if (!review.valid) {
         allValid = false;
@@ -476,13 +514,10 @@ export async function executeReflectionNode(state: VrikshaState): Promise<NodeEx
     // All reviews passed - apply patches
     const { codebase, results } = await applyPendingDiffs(state);
 
-    // Generate documentation
-    const samjhaoPromise = generateSamjhao(state);
-    const deploymentDocsPromise = generateDeploymentDocs(state);
-
+    // Generate documentation in parallel
     const [samjhaoMarkdown, deploymentDocs] = await Promise.all([
-      samjhaoPromise,
-      deploymentDocsPromise,
+      generateSamjhao(state, onStatus),
+      generateDeploymentDocs(state, onStatus),
     ]);
 
     tokensUsed += estimateTokens(samjhaoMarkdown) + estimateTokens(deploymentDocs);

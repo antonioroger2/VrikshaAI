@@ -7,7 +7,7 @@
  */
 
 import { API_CONFIG, isAPIConfigured } from '../api-config';
-import { withRetries } from '../utils';
+import { withSmartRetries } from '../utils';
 import type {
   VrikshaState,
   ExecutionPlan,
@@ -161,12 +161,20 @@ async function callGroq(
 /**
  * Classify user intent from their message
  */
-export async function classifyIntent(message: string): Promise<UserIntent> {
+export async function classifyIntent(
+  message: string,
+  onStatus?: (msg: string) => void
+): Promise<UserIntent> {
   let response: string | null = null;
+  const estimatedTokens = 500;
 
   if (isAPIConfigured('groq')) {
     try {
-      response = await withRetries(() => callGroq(INTENT_CLASSIFICATION_PROMPT, message));
+      response = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroq(INTENT_CLASSIFICATION_PROMPT, message),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq exhausted retries, falling back to Bedrock...', e);
     }
@@ -174,15 +182,18 @@ export async function classifyIntent(message: string): Promise<UserIntent> {
 
   if (!response && isAPIConfigured('bedrock')) {
     try {
-      response = await withRetries(() => callBedrock(INTENT_CLASSIFICATION_PROMPT, message));
+      response = await withSmartRetries(
+        'bedrock', estimatedTokens,
+        () => callBedrock(INTENT_CLASSIFICATION_PROMPT, message),
+        onStatus
+      );
     } catch (e) {
       console.warn('Bedrock exhausted retries...', e);
     }
   }
 
-  // NO HARDCODED FALLBACK: Throw an explicit error so the orchestrator halts
   if (!response) {
-    throw new Error("All AI providers are currently experiencing high traffic or rate limits. Please try again in a few moments.");
+    throw new Error('All AI providers are currently experiencing high traffic or rate limits. Please try again in a few moments.');
   }
 
   const intent = response.trim().toLowerCase() as UserIntent;
@@ -194,7 +205,8 @@ export async function classifyIntent(message: string): Promise<UserIntent> {
  * Generate execution plan using LLM
  */
 export async function generatePlan(
-  state: VrikshaState
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
 ): Promise<{ plan: ExecutionPlan | null; response: string; clarifyingQuestions?: string[] }> {
   const { translatedText, codebase, architecture, conversation } = state;
 
@@ -222,9 +234,15 @@ export async function generatePlan(
 
   let response: string | null = null;
 
+  const estimatedTokens = estimateTokens(translatedText + context) + 2000;
+
   if (isAPIConfigured('groq')) {
     try {
-      response = await withRetries(() => callGroq(SOCRATIC_PLANNER_PROMPT, translatedText, context));
+      response = await withSmartRetries(
+        'groq', estimatedTokens,
+        () => callGroq(SOCRATIC_PLANNER_PROMPT, translatedText, context),
+        onStatus
+      );
     } catch (e) {
       console.warn('Groq failed planning...', e);
     }
@@ -232,7 +250,11 @@ export async function generatePlan(
 
   if (!response && isAPIConfigured('bedrock')) {
     try {
-      response = await withRetries(() => callBedrock(SOCRATIC_PLANNER_PROMPT, translatedText, context));
+      response = await withSmartRetries(
+        'bedrock', estimatedTokens,
+        () => callBedrock(SOCRATIC_PLANNER_PROMPT, translatedText, context),
+        onStatus
+      );
     } catch (e) {
       console.warn('Bedrock failed planning...', e);
     }
@@ -288,16 +310,19 @@ export async function generatePlan(
 /**
  * Execute the Planner Node
  */
-export async function executePlannerNode(state: VrikshaState): Promise<NodeExecutionResult> {
+export async function executePlannerNode(
+  state: VrikshaState,
+  onStatus?: (msg: string) => void
+): Promise<NodeExecutionResult> {
   try {
     // First classify intent if not already done
     if (state.intent === 'unknown') {
-      const intent = await classifyIntent(state.translatedText);
+      const intent = await classifyIntent(state.translatedText, onStatus);
       state = { ...state, intent };
     }
 
     // Generate plan
-    const { plan, response, clarifyingQuestions } = await generatePlan(state);
+    const { plan, response, clarifyingQuestions } = await generatePlan(state, onStatus);
 
     // Calculate tokens used
     const tokensUsed = estimateTokens(state.translatedText) + estimateTokens(response);
