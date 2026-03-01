@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import { useRepoStore } from "@/store/repo-store";
 import { buildSearchIndex } from "@/lib/search-engine";
 import TreeLogo from "@/components/TreeLogo";
+import { createVoiceInputController } from "@/lib/voice-input";
 
 interface ToolbarProps {
   activePanel: "files" | "search" | "agent";
@@ -18,6 +19,40 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
   const { files, importFiles, clearAll, loadRepo, createFile } = useRepoStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [voiceRecording, setVoiceRecording] = useState(false);
+  const voiceControllerRef = useRef<any>(null);
+
+  // Handle voice recording
+  const handleVoiceClick = async () => {
+    if (voiceRecording) {
+      // Stop recording and process
+      if (voiceControllerRef.current) {
+        try {
+          const blob = await voiceControllerRef.current.stopAndTranscribe();
+          setVoiceRecording(false);
+          // Process the Tamil workflow
+          const { processTamilVoiceWorkflow } = await import('@/lib/voice-input');
+          const result = await processTamilVoiceWorkflow(blob);
+          // Play audio
+          const audio = new Audio(URL.createObjectURL(result.audioBlob));
+          audio.play();
+          alert(`Response: ${result.text}`);
+        } catch (error) {
+          alert(`Voice processing error: ${error}`);
+        }
+      }
+    } else {
+      // Start recording
+      try {
+        const { createVoiceInputController } = await import('@/lib/voice-input');
+        voiceControllerRef.current = createVoiceInputController();
+        await voiceControllerRef.current.start('ta'); // Start in Tamil
+        setVoiceRecording(true);
+      } catch (error) {
+        alert(`Voice recording error: ${error}`);
+      }
+    }
+  };
 
   // Import files from a folder or zip via <input type="file">
   const handleImportClick = () => {
@@ -159,6 +194,16 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
 
         <button className="toolbar-btn danger" onClick={handleClear}>
           🗑 Clear
+        </button>
+
+        <div className="toolbar-separator" />
+
+        <button
+          className={`toolbar-btn ${voiceRecording ? 'recording' : ''}`}
+          onClick={handleVoiceClick}
+          title="Voice Input"
+        >
+          {voiceRecording ? '🔴' : '🎤'}
         </button>
 
         {/* Hidden file input for folder upload */}

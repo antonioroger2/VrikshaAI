@@ -2,7 +2,7 @@
  * reflection-agent.ts — Node 4: Reflection & Documentation Agent
  * 
  * Process:
- * 1. Code Review: Gemini 3.1 Pro evaluates patched codebase for AWS Well-Architected best practices
+ * 1. Code Review: Local Gemma 3 evaluates patched codebase for AWS Well-Architected best practices
  * 2. If diff fails, loop back to Node 3 (Code Editor)
  * 3. Samjhao Layer: Generate explanation in user's native language
  * 4. Documentation: Create standard English deployment documentation
@@ -85,48 +85,29 @@ Output in markdown format with proper code blocks.`;
 // ── Gemini API ───────────────────────────────────────────────────────────────
 
 /**
- * Call Google Gemini for code review and documentation
+ * Call local Gemma 3 for code review and documentation
  */
 async function callGemini(
   systemPrompt: string,
   userMessage: string
 ): Promise<string> {
-  const { baseUrl, apiKey, model } = API_CONFIG.gemini;
+  try {
+    const { pipeline } = await import('@xenova/transformers');
+    const generator = await pipeline('text-generation', 'google/gemma-3-4b-it');
 
-  if (!apiKey) {
-    throw new Error('Gemini API key not configured');
+    const prompt = `${systemPrompt}\n\n${userMessage}`;
+
+    const output = await generator(prompt, {
+      max_new_tokens: 4096,
+      temperature: 0.7,
+      do_sample: true,
+    });
+
+    return output[0].generated_text.replace(prompt, '').trim();
+  } catch (error) {
+    console.warn('Failed to generate with local Gemma 3:', error);
+    throw new Error('Local Gemma 3 inference failed');
   }
-
-  const response = await fetch(
-    `${baseUrl}/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: systemPrompt + '\n\n' + userMessage },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4096,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Gemini API error: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 /**

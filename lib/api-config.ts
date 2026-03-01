@@ -5,27 +5,31 @@
  * - AI4Bharat (IndicTrans2 & Saaras ASR) for vernacular speech
  * - Amazon Bedrock (Claude 3.5 Sonnet) for Socratic planning
  * - Groq (Llama-3.3-70b) for ultra-low latency planning
- * - Qwen Coder for AST-aware code editing
- * - Gemini 3.1 Pro for reflection & verification
- * - Nomic Embed Code for vector retrieval
+ * - Qwen3 Coder (free) for AST-aware code editing
+ * - Local Gemma 3 (via @xenova/transformers) for code review and documentation
+ * - Local Nomic Embed (via @xenova/transformers) for vector retrieval
  */
 
 // ── Environment Variables ────────────────────────────────────────────────────
 
 export const API_CONFIG = {
   // AI4Bharat - Vernacular Speech Recognition & Translation
+  /*
   ai4bharat: {
     baseUrl: process.env.NEXT_PUBLIC_AI4BHARAT_BASE_URL || 'https://api.ai4bharat.org',
     apiKey: process.env.NEXT_PUBLIC_AI4BHARAT_API_KEY || '',
     asrModel: process.env.NEXT_PUBLIC_AI4BHARAT_ASR_MODEL || 'saaras-v3',
     translationModel: process.env.NEXT_PUBLIC_AI4BHARAT_TRANSLATION_MODEL || 'indictrans2',
   },
+  */
 
   // Sarvam AI - Alternative vernacular speech
+  /*
   sarvam: {
     baseUrl: process.env.NEXT_PUBLIC_SARVAM_BASE_URL || 'https://api.sarvam.ai',
     apiKey: process.env.NEXT_PUBLIC_SARVAM_API_KEY || '',
   },
+  */
 
   // Amazon Bedrock - Claude 3.5 Sonnet for Socratic Planning
   bedrock: {
@@ -41,21 +45,41 @@ export const API_CONFIG = {
     model: process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama-3-70b',
   },
 
-  // Qwen Coder - AST-aware code editing (via OpenRouter or direct)
+  // Groq ASR - Whisper for speech recognition
+  groqAsr: {
+    baseUrl: process.env.NEXT_PUBLIC_GROQ_BASE_URL || 'https://api.groq.com',
+    apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY || '',
+    model: process.env.NEXT_PUBLIC_GROQ_ASR_MODEL || 'whisper-large-v3',
+    fallbackModel: process.env.NEXT_PUBLIC_GROQ_ASR_FALLBACK_MODEL || 'whisper-large-v3-turbo',
+  },
+
+  // Google TTS - Free tier text-to-speech
+  googleTts: {
+    baseUrl: process.env.NEXT_PUBLIC_GOOGLE_TTS_BASE_URL || 'https://texttospeech.googleapis.com',
+    apiKey: process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY || '',
+  },
+
+  // Microsoft TTS - Free tier text-to-speech
+  microsoftTts: {
+    baseUrl: process.env.NEXT_PUBLIC_MICROSOFT_TTS_BASE_URL || 'https://speech.microsoft.com',
+    apiKey: process.env.NEXT_PUBLIC_MICROSOFT_TTS_API_KEY || '',
+  },
+
+  // Qwen3 Coder - AST-aware code editing (free via OpenRouter)
   qwen: {
     baseUrl: process.env.NEXT_PUBLIC_QWEN_BASE_URL || 'https://openrouter.ai',
     apiKey: process.env.NEXT_PUBLIC_QWEN_API_KEY || '',
-    model: process.env.NEXT_PUBLIC_QWEN_MODEL || 'qwen-coder-7b',
+    model: process.env.NEXT_PUBLIC_QWEN_MODEL || 'qwen/qwen3-coder:free',
   },
 
-  // Google Gemini - Reflection & Verification
+  // Google Gemini (Gemma) - Reflection & Verification
   gemini: {
-    baseUrl: process.env.NEXT_PUBLIC_GEMINI_BASE_URL || 'https://api.gemini.google.com',
+    baseUrl: process.env.NEXT_PUBLIC_GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com',
     apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
-    model: process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-1.5-pro',
+    model: process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemma-2-9b-it',
   },
 
-  // Nomic Embed - Vector retrieval for code
+  // Local Nomic Embed - Vector retrieval for code (via @xenova/transformers)
   nomic: {
     baseUrl: process.env.NEXT_PUBLIC_NOMIC_BASE_URL || 'https://api.nomic.ai',
     apiKey: process.env.NEXT_PUBLIC_NOMIC_API_KEY || '',
@@ -103,32 +127,41 @@ export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
 
 export function getConfiguredAPIs(): { name: string; configured: boolean }[] {
   return [
-    { name: 'AI4Bharat (ASR)', configured: !!API_CONFIG.ai4bharat.apiKey },
-    { name: 'Sarvam AI', configured: !!API_CONFIG.sarvam.apiKey },
+    // { name: 'AI4Bharat (ASR)', configured: !!API_CONFIG.ai4bharat.apiKey },
+    // { name: 'Sarvam AI', configured: !!API_CONFIG.sarvam.apiKey },
     { name: 'AWS Bedrock', configured: !!API_CONFIG.bedrock.apiKey },
     { name: 'Groq (Llama)', configured: !!API_CONFIG.groq.apiKey },
-    { name: 'Qwen Coder', configured: !!API_CONFIG.qwen.apiKey },
-    { name: 'Gemini', configured: !!API_CONFIG.gemini.apiKey },
-    { name: 'Nomic Embed', configured: !!API_CONFIG.nomic.apiKey },
+    { name: 'Groq (ASR)', configured: !!API_CONFIG.groqAsr.apiKey },
+    { name: 'Google TTS', configured: !!API_CONFIG.googleTts.apiKey },
+    { name: 'Microsoft TTS', configured: !!API_CONFIG.microsoftTts.apiKey },
+    { name: 'Qwen3 Coder', configured: !!API_CONFIG.qwen.apiKey },
+    { name: 'Local Gemma 3', configured: true }, // Always available
+    { name: 'Local Nomic Embed', configured: true }, // Always available
   ];
 }
 
 export function isAPIConfigured(api: keyof typeof API_CONFIG): boolean {
   switch (api) {
-    case 'ai4bharat':
-      return !!API_CONFIG.ai4bharat.apiKey;
-    case 'sarvam':
-      return !!API_CONFIG.sarvam.apiKey;
+    // case 'ai4bharat':
+    //   return !!API_CONFIG.ai4bharat.apiKey;
+    // case 'sarvam':
+    //   return !!API_CONFIG.sarvam.apiKey;
     case 'bedrock':
       return !!API_CONFIG.bedrock.apiKey;
     case 'groq':
       return !!API_CONFIG.groq.apiKey;
+    case 'groqAsr':
+      return !!API_CONFIG.groqAsr.apiKey;
+    case 'googleTts':
+      return !!API_CONFIG.googleTts.apiKey;
+    case 'microsoftTts':
+      return !!API_CONFIG.microsoftTts.apiKey;
     case 'qwen':
       return !!API_CONFIG.qwen.apiKey;
     case 'gemini':
-      return !!API_CONFIG.gemini.apiKey;
+      return true; // Local Gemma 3 always available
     case 'nomic':
-      return !!API_CONFIG.nomic.apiKey;
+      return true; // Local embeddings always available
     default:
       return false;
   }

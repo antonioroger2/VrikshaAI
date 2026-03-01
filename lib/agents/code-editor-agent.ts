@@ -4,7 +4,7 @@
  * Process:
  * 1. Retrieval: Nomic Embed Code performs vector search over generated files
  * 2. Localization: Tree-sitter AST parser isolates exact function/resource block
- * 3. Patch Generation: Qwen Coder outputs strict Unified Diff format
+ * 3. Patch Generation: Qwen3 Coder (free via OpenRouter with fallback) outputs strict Unified Diff format
  * 
  * This is what separates a standard code generator from a true autonomous software engineer.
  */
@@ -70,11 +70,18 @@ async function callQwenCoder(
   userMessage: string,
   temperature: number = 0.3
 ): Promise<string> {
-  const { baseUrl, apiKey, model } = API_CONFIG.qwen;
+  const { baseUrl, apiKey } = API_CONFIG.qwen;
 
   if (!apiKey) {
     throw new Error('Qwen API key not configured');
   }
+
+  // List of free Qwen coder models to try in order
+  const models = [
+    'qwen/qwen3-coder:free',
+    'qwen/qwen2.5-coder:free',
+    'qwen/qwen2.5:free', // fallback if coder not available
+  ];
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -85,7 +92,7 @@ async function callQwenCoder(
       'X-Title': 'VRIKSHA.ai',
     },
     body: JSON.stringify({
-      model,
+      models, // OpenRouter will try models in order on failure/rate limit
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
@@ -95,12 +102,35 @@ async function callQwenCoder(
     }),
   });
 
+  // Check rate limits (these are for the model that was used)
+  const remainingRequests = response.headers.get('x-ratelimit-remaining-requests');
+  const remainingTokens = response.headers.get('x-ratelimit-remaining-tokens');
+  if (remainingRequests && parseInt(remainingRequests) < 5) {
+    console.warn(`[Qwen] Low requests remaining: ${remainingRequests}`);
+  }
+  if (remainingTokens && parseInt(remainingTokens) < 1000) {
+    console.warn(`[Qwen] Low tokens remaining: ${remainingTokens}`);
+  }
+  if (remainingRequests && parseInt(remainingRequests) === 0) {
+    throw new Error('Qwen rate limit exceeded: no requests remaining');
+  }
+  if (remainingTokens && parseInt(remainingTokens) < 500) {
+    throw new Error('Qwen rate limit exceeded: insufficient tokens remaining');
+  }
+
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`Qwen API error: ${error}`);
   }
 
   const data = await response.json();
+
+  // Log usage
+  const usage = data.usage;
+  if (usage) {
+    console.log(`[Qwen] Usage: ${usage.total_tokens} tokens (${usage.prompt_tokens} prompt + ${usage.completion_tokens} completion)`);
+  }
+
   return data.choices[0]?.message?.content || '';
 }
 
@@ -143,39 +173,19 @@ async function callGroqForCode(
   return data.choices[0]?.message?.content || '';
 }
 
-// ── Vector Search with Nomic ─────────────────────────────────────────────────
+// ── Vector Search with Local Nomic Embed ──────────────────────────────────────
 
 /**
- * Get embeddings for code using Nomic Embed Code
+ * Get embeddings for code using local Nomic Embed via Transformers.js
  */
 async function getCodeEmbedding(code: string): Promise<number[]> {
-  const { baseUrl, apiKey, model } = API_CONFIG.nomic;
-
-  if (!apiKey) {
-    return []; // Return empty if not configured
-  }
-
   try {
-    const response = await fetch(`${baseUrl}/embedding/text`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        texts: [code],
-        task_type: 'search_document',
-      }),
-    });
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data = await response.json();
-    return data.embeddings?.[0] || [];
-  } catch {
+    const { pipeline } = await import('@xenova/transformers');
+    const embedder = await pipeline('feature-extraction', 'nomic-ai/nomic-embed-text-v1');
+    const output = await embedder(code);
+    return Array.from(output.data) as number[];
+  } catch (error) {
+    console.warn('Failed to generate local embedding:', error);
     return [];
   }
 }

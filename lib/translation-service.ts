@@ -33,6 +33,7 @@ export interface BatchTranslationRequest {
 /**
  * Translate text using AI4Bharat IndicTrans2 API
  */
+/*
 export async function translateWithAI4Bharat(
   request: TranslationRequest
 ): Promise<TranslationResponse> {
@@ -80,10 +81,12 @@ export async function translateWithAI4Bharat(
     return fallbackTranslation(request);
   }
 }
+*/
 
 /**
  * Translate using Sarvam AI as alternative
  */
+/*
 export async function translateWithSarvam(
   request: TranslationRequest
 ): Promise<TranslationResponse> {
@@ -130,6 +133,7 @@ export async function translateWithSarvam(
     return translateWithAI4Bharat(request);
   }
 }
+*/
 
 /**
  * Translate using Groq Llama as fallback (fast, capable of Indian languages)
@@ -202,14 +206,14 @@ export async function translate(
   request: TranslationRequest
 ): Promise<TranslationResponse> {
   // Try AI4Bharat first (best for Indic languages)
-  if (API_CONFIG.ai4bharat.apiKey) {
-    return translateWithAI4Bharat(request);
-  }
+  // if (API_CONFIG.ai4bharat.apiKey) {
+  //   return translateWithAI4Bharat(request);
+  // }
 
   // Try Sarvam as second option
-  if (API_CONFIG.sarvam.apiKey) {
-    return translateWithSarvam(request);
-  }
+  // if (API_CONFIG.sarvam.apiKey) {
+  //   return translateWithSarvam(request);
+  // }
 
   // Try Groq Llama as fallback
   if (API_CONFIG.groq.apiKey) {

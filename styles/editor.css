@@ -206,6 +206,19 @@
   cursor: not-allowed;
 }
 
+.toolbar-btn.recording {
+  animation: pulse 1s infinite;
+  background: rgba(192, 83, 58, 0.1);
+  border-color: rgba(192, 83, 58, 0.3);
+  color: var(--terracotta);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 .toolbar-separator {
   width: 1px;
   height: 20px;

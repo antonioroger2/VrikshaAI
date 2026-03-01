@@ -3,8 +3,8 @@
  *
  * Implements:
  *  1. Browser MediaRecorder API for capturing audio blobs.
- *  2. AI4Bharat Saaras ASR (primary) for transcription.
- *  3. Sarvam AI ASR (fallback) for transcription.
+ *  2. Groq Whisper ASR (primary) for transcription.
+ *  3. Fallback to turbo model if rate limited.
  *  4. Spoken language auto-detection.
  *
  * The audio is recorded as WebM/Opus (Chrome/Edge) or audio/mp4 (Safari),
@@ -39,10 +39,24 @@ export interface RecordingHandle {
   elapsed: () => number;
 }
 
+export interface TTSRequest {
+  text: string;
+  language: SupportedLanguage;
+  voice?: string;
+}
+
+export interface TTSResult {
+  audioBlob: Blob;
+  duration_ms: number;
+}
+
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /** Maximum recording duration before auto-stop (ms) */
 const MAX_RECORDING_MS = 60_000;
+
+/** Maximum audio file size (25MB) */
+const MAX_AUDIO_SIZE_MB = 25;
 
 /** Preferred MIME types in order of priority */
 const PREFERRED_MIME_TYPES = [
@@ -211,77 +225,74 @@ export async function stopRecording(recorder: MediaRecorder): Promise<Blob> {
 // ── Transcription (AI4Bharat Saaras ASR) ─────────────────────────────────────
 
 /**
- * Transcribe an audio blob using the AI4Bharat Saaras ASR API.
+ * Transcribe an audio blob using Groq Whisper ASR API.
  *
- * Falls back to Sarvam AI if AI4Bharat fails or is not configured.
+ * Falls back to turbo model if rate limit is low.
  */
 export async function transcribeAudio(
   audioBlob: Blob,
   preferredLanguage?: SupportedLanguage,
 ): Promise<TranscriptionResult> {
-  // Try AI4Bharat first
-  const ai4bharatKey = API_CONFIG.ai4bharat.apiKey;
-  if (ai4bharatKey) {
-    try {
-      return await transcribeWithAI4Bharat(audioBlob, preferredLanguage);
-    } catch (err) {
-      console.warn('[voice-input] AI4Bharat ASR failed, trying Sarvam fallback:', err);
-    }
+  // Check file size limit
+  const sizeMB = audioBlob.size / (1024 * 1024);
+  if (sizeMB > MAX_AUDIO_SIZE_MB) {
+    throw new Error(`Audio file too large: ${sizeMB.toFixed(2)}MB (max ${MAX_AUDIO_SIZE_MB}MB)`);
   }
 
-  // Try Sarvam AI fallback
-  const sarvamKey = API_CONFIG.sarvam.apiKey;
-  if (sarvamKey) {
-    try {
-      return await transcribeWithSarvam(audioBlob, preferredLanguage);
-    } catch (err) {
-      console.warn('[voice-input] Sarvam ASR failed:', err);
-    }
+  const groqKey = API_CONFIG.groqAsr.apiKey;
+  if (!groqKey) {
+    throw new Error(VOICE_INPUT_STATUS.API_NOT_CONFIGURED);
   }
 
-  throw new Error(
-    !ai4bharatKey && !sarvamKey
-      ? VOICE_INPUT_STATUS.API_NOT_CONFIGURED
-      : 'Both ASR providers failed. Please try again.',
-  );
+  try {
+    return await transcribeWithGroq(audioBlob, preferredLanguage, API_CONFIG.groqAsr.model);
+  } catch (err) {
+    console.warn('[voice-input] Groq ASR failed, trying turbo fallback:', err);
+    // Check if it's rate limit, but since we check headers, perhaps fallback always or check error
+    try {
+      return await transcribeWithGroq(audioBlob, preferredLanguage, API_CONFIG.groqAsr.fallbackModel);
+    } catch (fallbackErr) {
+      console.warn('[voice-input] Turbo ASR also failed:', fallbackErr);
+      throw new Error('ASR providers failed. Please try again.');
+    }
+  }
 }
 
-// ── AI4Bharat Saaras ASR ─────────────────────────────────────────────────────
+// ── Groq Whisper ASR ─────────────────────────────────────────────────────
 
 /**
- * POST audio to AI4Bharat Saaras ASR v3 endpoint.
+ * POST audio to Groq Whisper ASR endpoint.
  *
  * API contract:
- *   POST {baseUrl}/asr/v1/recognize
+ *   POST {baseUrl}/openai/v1/audio/transcriptions
  *   Content-Type: multipart/form-data
  *   Authorization: Bearer {apiKey}
  *
  *   Form fields:
- *     audio        — binary audio file
- *     language     — ISO 639-1 code (optional, 'auto' for detection)
- *     model        — e.g. 'saaras-v3'
+ *     file        — binary audio file
+ *     model       — e.g. 'whisper-large-v3'
+ *     language    — ISO 639-1 code (optional)
  *
  *   Response JSON:
- *     { status, transcript, language, confidence, duration_ms }
+ *     { text, language, duration }
  */
-async function transcribeWithAI4Bharat(
+async function transcribeWithGroq(
   audioBlob: Blob,
   preferredLanguage?: SupportedLanguage,
+  model: string,
 ): Promise<TranscriptionResult> {
-  const apiKey = API_CONFIG.ai4bharat.apiKey;
-  const baseUrl = API_CONFIG.ai4bharat.baseUrl;
+  const apiKey = API_CONFIG.groqAsr.apiKey;
+  const baseUrl = API_CONFIG.groqAsr.baseUrl;
 
   const formData = new FormData();
-  formData.append('audio', audioBlob, `recording.${extensionForBlob(audioBlob)}`);
+  formData.append('file', audioBlob, `recording.${extensionForBlob(audioBlob)}`);
+  formData.append('model', model);
 
-  if (preferredLanguage && preferredLanguage !== 'en') {
-    formData.append('language', SUPPORTED_LANGUAGES[preferredLanguage].ai4bharatCode);
-  } else {
-    formData.append('language', 'auto');
+  if (preferredLanguage) {
+    formData.append('language', preferredLanguage);
   }
-  formData.append('model', API_CONFIG.ai4bharat.asrModel);
 
-  const response = await fetch(`${baseUrl}/asr/v1/recognize`, {
+  const response = await fetch(`${baseUrl}/openai/v1/audio/transcriptions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -289,82 +300,28 @@ async function transcribeWithAI4Bharat(
     body: formData,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'unknown');
-    throw new Error(`AI4Bharat ASR error (${response.status}): ${errorText}`);
+  // Check rate limit headers
+  const remaining = response.headers.get('x-ratelimit-remaining');
+  if (remaining && parseInt(remaining) < 10) {
+    console.warn(`[voice-input] Low rate limit remaining: ${remaining}, consider fallback`);
+    // But since we call this function with model, we can throw to trigger fallback
+    if (model !== API_CONFIG.groqAsr.fallbackModel) {
+      throw new Error('Rate limit low, switching to fallback model');
+    }
   }
 
-  const data = await response.json();
-
-  // Normalize the response — the API may use different field names
-  const transcript: string = data.transcript ?? data.text ?? data.result ?? '';
-  const detectedLang: string = data.language ?? data.lang ?? preferredLanguage ?? 'en';
-  const confidence: number = data.confidence ?? data.score ?? 0.0;
-  const durationMs: number = data.duration_ms ?? data.duration ?? 0;
-
-  return {
-    text: transcript.trim(),
-    language: normalizeLanguageCode(detectedLang),
-    confidence,
-    duration_ms: durationMs,
-  };
-}
-
-// ── Sarvam AI ASR ────────────────────────────────────────────────────────────
-
-/**
- * POST audio to Sarvam AI Speech-to-Text endpoint.
- *
- * API contract:
- *   POST {baseUrl}/speech-to-text
- *   Content-Type: multipart/form-data
- *   api-subscription-key: {apiKey}
- *
- *   Form fields:
- *     file             — binary audio file
- *     language_code    — e.g. 'hi-IN', 'ta-IN'
- *     model            — e.g. 'saarika:v2'
- *
- *   Response JSON:
- *     { transcript, language_code, request_id }
- */
-async function transcribeWithSarvam(
-  audioBlob: Blob,
-  preferredLanguage?: SupportedLanguage,
-): Promise<TranscriptionResult> {
-  const apiKey = API_CONFIG.sarvam.apiKey;
-  const baseUrl = API_CONFIG.sarvam.baseUrl;
-
-  const formData = new FormData();
-  formData.append('file', audioBlob, `recording.${extensionForBlob(audioBlob)}`);
-
-  // Sarvam uses BCP-47 language codes like 'hi-IN'
-  const langCode = preferredLanguage
-    ? sarvamLangCode(preferredLanguage)
-    : 'hi-IN';
-  formData.append('language_code', langCode);
-  formData.append('model', 'saarika:v2');
-
-  const response = await fetch(`${baseUrl}/speech-to-text`, {
-    method: 'POST',
-    headers: {
-      'api-subscription-key': apiKey,
-    },
-    body: formData,
-  });
-
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'unknown');
-    throw new Error(`Sarvam ASR error (${response.status}): ${errorText}`);
+    throw new Error(`Groq ASR error (${response.status}): ${errorText}`);
   }
 
   const data = await response.json();
 
   return {
-    text: (data.transcript ?? '').trim(),
-    language: preferredLanguage ?? 'hi',
-    confidence: 0.85, // Sarvam doesn't always return confidence
-    duration_ms: 0,
+    text: (data.text ?? '').trim(),
+    language: normalizeLanguageCode(data.language ?? preferredLanguage ?? 'en'),
+    confidence: 0.9, // Groq doesn't return confidence
+    duration_ms: data.duration ? data.duration * 1000 : 0,
   };
 }
 
@@ -608,22 +565,170 @@ function normalizeLanguageCode(code: string): SupportedLanguage {
   return aliases[base] ?? 'en';
 }
 
-/** Convert SupportedLanguage to Sarvam's BCP-47 code */
-function sarvamLangCode(lang: SupportedLanguage): string {
-  const map: Record<SupportedLanguage, string> = {
-    en: 'en-IN',
-    hi: 'hi-IN',
-    ta: 'ta-IN',
-    te: 'te-IN',
-    bn: 'bn-IN',
-    mr: 'mr-IN',
-    gu: 'gu-IN',
-    kn: 'kn-IN',
-    ml: 'ml-IN',
-    pa: 'pa-IN',
-    or: 'or-IN',
+// ── Text-to-Speech (Free Alternatives) ──────────────────────────────────────
+
+/**
+ * Synthesize speech from text using free TTS APIs.
+ *
+ * Tries Google TTS first, then Microsoft TTS.
+ */
+export async function synthesizeSpeech(request: TTSRequest): Promise<TTSResult> {
+  // Try Google TTS first
+  if (API_CONFIG.googleTts.apiKey) {
+    try {
+      return await synthesizeWithGoogle(request);
+    } catch (err) {
+      console.warn('[voice-input] Google TTS failed, trying Microsoft:', err);
+    }
+  }
+
+  // Try Microsoft TTS
+  if (API_CONFIG.microsoftTts.apiKey) {
+    try {
+      return await synthesizeWithMicrosoft(request);
+    } catch (err) {
+      console.warn('[voice-input] Microsoft TTS failed:', err);
+    }
+  }
+
+  throw new Error('No TTS API configured or both failed.');
+}
+
+/**
+ * Synthesize with Google Text-to-Speech API.
+ */
+async function synthesizeWithGoogle(request: TTSRequest): Promise<TTSResult> {
+  const apiKey = API_CONFIG.googleTts.apiKey;
+  const baseUrl = API_CONFIG.googleTts.baseUrl;
+
+  const payload = {
+    input: { text: request.text },
+    voice: {
+      languageCode: request.language === 'en' ? 'en-US' : `${request.language}-IN`,
+      name: request.voice || 'en-US-Neural2-D',
+    },
+    audioConfig: {
+      audioEncoding: 'MP3',
+    },
   };
-  return map[lang] ?? 'hi-IN';
+
+  const response = await fetch(`${baseUrl}/v1/text:synthesize?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Google TTS error (${response.status})`);
+  }
+
+  const data = await response.json();
+  const audioContent = data.audioContent;
+  const audioBlob = new Blob([Uint8Array.from(atob(audioContent), c => c.charCodeAt(0))], { type: 'audio/mp3' });
+
+  return {
+    audioBlob,
+    duration_ms: 0, // Estimate or leave as 0
+  };
+}
+
+/**
+ * Synthesize with Microsoft Azure Text-to-Speech API.
+ */
+async function synthesizeWithMicrosoft(request: TTSRequest): Promise<TTSResult> {
+  const apiKey = API_CONFIG.microsoftTts.apiKey;
+  const baseUrl = API_CONFIG.microsoftTts.baseUrl;
+
+  const ssml = `<speak version='1.0' xml:lang='${request.language === 'en' ? 'en-US' : `${request.language}-IN`}'><voice name='${request.voice || 'en-US-AriaNeural'}'>${request.text}</voice></speak>`;
+
+  const response = await fetch(`${baseUrl}/cognitiveservices/v1`, {
+    method: 'POST',
+    headers: {
+      'Ocp-Apim-Subscription-Key': apiKey,
+      'Content-Type': 'application/ssml+xml',
+      'X-Microsoft-OutputFormat': 'audio-16khz-128kbitrate-mono-mp3',
+    },
+    body: ssml,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Microsoft TTS error (${response.status})`);
+  }
+
+  const audioBlob = await response.blob();
+
+  return {
+    audioBlob,
+    duration_ms: 0,
+  };
+}
+
+// ── Tamil Voice Workflow ────────────────────────────────────────────────────
+
+/**
+ * Process voice input in Tamil: ASR -> Translate to English -> Socratic Interview -> Translate to Tamil -> TTS
+ */
+export async function processTamilVoiceWorkflow(audioBlob: Blob): Promise<{ text: string; audioBlob: Blob }> {
+  // 1. ASR to Tamil
+  const transcription = await transcribeAudio(audioBlob, 'ta');
+  const tamilText = transcription.text;
+
+  // 2. Translate Tamil to English
+  const { translate } = await import('./translation-service');
+  const englishTranslation = await translate({
+    text: tamilText,
+    sourceLang: 'ta' as SupportedLanguage,
+    targetLang: 'en' as SupportedLanguage,
+  });
+
+  // 3. Prompt Socratic interview (using Groq)
+  const socraticPrompt = `You are a Socratic interviewer. Ask thoughtful, probing questions to help the user explore their ideas deeply. Respond to: "${englishTranslation.translatedText}"`;
+  const socraticResponse = await generateSocraticResponse(socraticPrompt);
+
+  // 4. Translate response to Tamil
+  const tamilResponse = await translate({
+    text: socraticResponse,
+    sourceLang: 'en' as SupportedLanguage,
+    targetLang: 'ta' as SupportedLanguage,
+  });
+
+  // 5. TTS to Tamil
+  const ttsResult = await synthesizeSpeech({
+    text: tamilResponse.translatedText,
+    language: 'ta',
+  });
+
+  return {
+    text: tamilResponse.translatedText,
+    audioBlob: ttsResult.audioBlob,
+  };
+}
+
+/**
+ * Generate Socratic response using Groq
+ */
+async function generateSocraticResponse(prompt: string): Promise<string> {
+  const response = await fetch(`${API_CONFIG.groq.baseUrl}/openai/v1/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_CONFIG.groq.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: API_CONFIG.groq.model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 500,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
 }
 
 // ── Status Constants ─────────────────────────────────────────────────────────
@@ -634,6 +739,6 @@ export const VOICE_INPUT_STATUS = {
   TRANSCRIBING: 'Transcribing...',
   BROWSER_NOT_SUPPORTED: 'Voice input not supported in this browser. Use Chrome or Firefox on desktop.',
   PERMISSION_DENIED: 'Microphone access denied — please enable in browser settings.',
-  API_NOT_CONFIGURED: 'No ASR API key configured. Set NEXT_PUBLIC_AI4BHARAT_API_KEY or NEXT_PUBLIC_SARVAM_API_KEY in .env',
+  API_NOT_CONFIGURED: 'No ASR API key configured. Set NEXT_PUBLIC_GROQ_API_KEY in .env',
   NETWORK_ERROR: 'Network error during transcription. Please check your connection.',
 } as const;

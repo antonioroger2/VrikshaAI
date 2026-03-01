@@ -14,7 +14,7 @@
 export const PROVIDER_LIMITS: Record<string, { rpm: number; tpm: number }> = {
   groq:    { rpm: 30,  tpm: 6_000 },
   bedrock: { rpm: 50,  tpm: 200_000 },
-  qwen:    { rpm: 20,  tpm: 40_000 },
+  qwen:    { rpm: 10,  tpm: 10_000 },
   gemini:  { rpm: 15,  tpm: 1_000_000 },
 };
 
