@@ -19,6 +19,7 @@ const NODE_LABELS: Record<AgentNodeId, { icon: string; label: string; color: str
   editing: { icon: "⚡", label: "Editing", color: "var(--sprout)" },
   reflecting: { icon: "🔬", label: "Reflecting", color: "#8ec8e8" },
   applying: { icon: "✏️", label: "Applying", color: "var(--lime)" },
+  responding: { icon: "💬", label: "Responding", color: "var(--blue)" },
   done: { icon: "✅", label: "Done", color: "var(--sprout)" },
   error: { icon: "❌", label: "Error", color: "var(--terracotta)" },
 };
@@ -119,13 +120,13 @@ export default function AgentPanel() {
 
       {/* Pipeline visualization */}
       <div className="agent-pipeline-bar">
-        {(["planning", "searching", "editing", "reflecting", "applying", "done"] as AgentNodeId[]).map((node) => {
+        {(["planning", "searching", "editing", "reflecting", "applying", "responding", "done"] as AgentNodeId[]).map((node) => {
           const info = NODE_LABELS[node];
           const isActive = currentNode === node;
           const isDone =
             currentNode === "done" ||
-            (["planning", "searching", "editing", "reflecting", "applying", "done"].indexOf(currentNode) >
-              ["planning", "searching", "editing", "reflecting", "applying", "done"].indexOf(node));
+            (["planning", "searching", "editing", "reflecting", "applying", "responding", "done"].indexOf(currentNode) >
+              ["planning", "searching", "editing", "reflecting", "applying", "responding", "done"].indexOf(node));
           return (
             <div
               key={node}

@@ -156,7 +156,7 @@ export async function translateWithGroq(
   const targetLanguageName = SUPPORTED_LANGUAGES[targetLang].name;
 
   try {
-    const response = await fetch(`${API_CONFIG.groq.baseUrl}/chat/completions`, {
+    const response = await fetch(`${API_CONFIG.groq.baseUrl}/openai/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -180,7 +180,16 @@ export async function translateWithGroq(
     });
 
     if (!response.ok) {
-      throw new Error(`Groq API error: ${response.status}`);
+      const errorText = await response.text();
+      const errorDetails = {
+        status: response.status,
+        statusText: response.statusText,
+        url: `${API_CONFIG.groq.baseUrl}/openai/v1/chat/completions`,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText,
+      };
+      console.error('🔍 Detailed Groq API Error (Translation):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Groq API error (${response.status} ${response.statusText}): ${errorText}`);
     }
 
     const data = await response.json();
@@ -250,7 +259,7 @@ export async function detectLanguage(text: string): Promise<SupportedLanguage> {
   }
 
   try {
-    const response = await fetch(`${API_CONFIG.groq.baseUrl}/chat/completions`, {
+    const response = await fetch(`${API_CONFIG.groq.baseUrl}/openai/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -274,6 +283,15 @@ export async function detectLanguage(text: string): Promise<SupportedLanguage> {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      const errorDetails = {
+        status: response.status,
+        statusText: response.statusText,
+        url: `${API_CONFIG.groq.baseUrl}/openai/v1/chat/completions`,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText,
+      };
+      console.error('🔍 Detailed Groq API Error (Language Detection):', JSON.stringify(errorDetails, null, 2));
       return 'en';
     }
 

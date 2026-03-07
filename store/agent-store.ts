@@ -22,6 +22,7 @@ export type AgentNodeId =
   | "editing"
   | "reflecting"
   | "applying"
+  | "responding"
   | "done"
   | "error";
 
@@ -186,12 +187,16 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     abortController = new AbortController();
     const signal = abortController.signal;
     const inputLang = language || get().inputLanguage;
+    const currentState = get();
+
+    // Check if we're currently waiting for answers to clarifying questions
+    const isRespondingToClarification = currentState.currentNode === 'responding' && !currentState.running;
 
     set({
       running: true,
       currentNode: "planning",
       error: null,
-      plan: null,
+      ...(isRespondingToClarification ? {} : { plan: null }), // Keep existing plan if responding to clarification
       inputLanguage: inputLang,
     });
 
@@ -232,9 +237,20 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         addMsg("system", `🌐 Translated: "${translatedGoal}"`);
       }
 
-      // ─── Node 2: Planning ──────────────────────────────────────
-      addStep("planning", "Analyzing goal and building plan…");
-      addMsg("agent", `🧠 **Planning:** Analyzing "${goal}"…`);
+      // If responding to clarification, combine with previous context
+      if (isRespondingToClarification) {
+        const recentMessages = currentState.messages.slice(-10); // Get recent conversation
+        const contextSummary = recentMessages
+          .filter(m => m.role !== 'system')
+          .map(m => `${m.role}: ${m.content}`)
+          .join('\n');
+        translatedGoal = `${contextSummary}\n\nLatest user input: ${translatedGoal}`;
+        addMsg("agent", `🧠 **Continuing Planning:** Incorporating your answers…`);
+      } else {
+        // ─── Node 2: Planning ──────────────────────────────────────
+        addStep("planning", "Analyzing goal and building plan…");
+        addMsg("agent", `🧠 **Planning:** Analyzing "${goal}"…`);
+      }
       
       let plan: AgentPlan;
       const hasLLM = isAPIConfigured('groq') || isAPIConfigured('bedrock');
@@ -286,10 +302,22 @@ export const useAgentStore = create<AgentState>((set, get) => ({
                 description: s.description,
               })),
             };
+          } else if (planResult?.clarifyingQuestions && planResult.clarifyingQuestions.length > 0) {
+            // LLM is asking clarifying questions instead of generating a plan
+            console.log('❓ LLM requesting clarification:', planResult.clarifyingQuestions);
+            addMsg("agent", planResult.response || "I need some clarification before I can create a plan:");
+            planResult.clarifyingQuestions.forEach((q: string) => addMsg("agent", `• ${q}`));
+            // Update status to indicate planning is complete and waiting for clarification
+            set({ currentNode: 'responding', isProcessing: false, running: false });
+            return; // Exit early, don't continue with plan execution
           } else {
-            throw new Error('LLM returned no plan');
+            console.error('🔍 LLM Response (no plan found):', planResult?.response);
+            throw new Error(`LLM returned no plan. Response: ${planResult?.response || 'No response received'}`);
           }
         } catch (llmError: any) {
+          console.error('🚨 CRITICAL: Plan generation failed!');
+          console.error('📋 Error details:', llmError.message);
+          console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits in .env file');
           throw new Error(`Failed to generate plan due to API error: ${llmError.message}`);
         }
       } else {

@@ -42,7 +42,7 @@ export const API_CONFIG = {
   groq: {
     baseUrl: process.env.NEXT_PUBLIC_GROQ_BASE_URL || 'https://api.groq.com',
     apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY || '',
-    model: process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama-3-70b',
+    model: process.env.NEXT_PUBLIC_GROQ_MODEL || 'llama-3.1-8b-instant',
   },
 
   // Groq ASR - Whisper for speech recognition

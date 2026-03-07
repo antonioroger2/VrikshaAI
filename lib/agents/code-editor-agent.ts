@@ -79,8 +79,8 @@ async function callQwenCoder(
   // List of free Qwen coder models to try in order
   const models = [
     'qwen/qwen3-coder:free',
-    'qwen/qwen2.5-coder:free',
-    'qwen/qwen2.5:free', // fallback if coder not available
+    'qwen/qwen2.5-coder-32b-instruct',
+    'qwen/qwen2.5-72b-instruct',
   ];
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -147,7 +147,7 @@ async function callGroqForCode(
     throw new Error('No code generation API configured');
   }
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/openai/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -165,8 +165,16 @@ async function callGroqForCode(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Groq API error: ${error}`);
+    const errorText = await response.text();
+    const errorDetails = {
+      status: response.status,
+      statusText: response.statusText,
+      url: `${baseUrl}/openai/v1/chat/completions`,
+      headers: Object.fromEntries(response.headers.entries()),
+      body: errorText,
+    };
+    console.error('🔍 Detailed Groq API Error (Code Generation):', JSON.stringify(errorDetails, null, 2));
+    throw new Error(`Groq API error (${response.status} ${response.statusText}): ${errorText}`);
   }
 
   const data = await response.json();
@@ -306,11 +314,13 @@ ${codeContext}
 Change Request: ${planStep.description}
 ${planStep.rationale ? `Rationale: ${planStep.rationale}` : ''}
 
-Generate a unified diff to make this change. Include 3 lines of context.`;
+Generate a unified diff to make this change. Include 3 lines of context.
+${planStep.symbol ? 'IMPORTANT: Generate line numbers starting from 1 (relative to the code shown above).' : ''}`;
 
   let diffOutput: string | null = null;
 
   const estimatedTokens = estimateTokens(prompt) + 1500;
+  const apiErrors: string[] = [];
 
   if (isAPIConfigured('qwen')) {
     try {
@@ -320,7 +330,9 @@ Generate a unified diff to make this change. Include 3 lines of context.`;
         onStatus
       );
     } catch (e) {
-      console.warn('Qwen API exhausted retries...', e);
+      const errorMsg = `Qwen API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
@@ -332,17 +344,27 @@ Generate a unified diff to make this change. Include 3 lines of context.`;
         onStatus
       );
     } catch (e) {
-      console.warn('Groq API exhausted retries...', e);
+      const errorMsg = `Groq API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
   // DELETE `generateEditFallback`. Throw error instead.
   if (!diffOutput) {
+    console.error('🚨 CRITICAL: All code editing APIs failed!');
+    console.error('📋 Failed APIs:', apiErrors);
+    console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits');
     throw new Error(`Failed to generate code edit for ${filePath} due to API rate limits. The pipeline has paused. Click Run to try this step again.`);
   }
 
-  // Parse the diff output
-  const cleanDiff = cleanDiffOutput(diffOutput, filePath);
+  // Clean and validate the diff output
+  let cleanDiff = diffOutput.trim();
+
+  // If we extracted a chunk, adjust the diff line numbers to match full file
+  if (planStep.symbol && codeContext !== originalContent) {
+    cleanDiff = adjustDiffLineNumbers(cleanDiff, lineRange.start - 1);
+  }
 
   // Apply the diff to get patched content
   const patched = applyUnifiedPatch(originalContent, cleanDiff);
@@ -384,6 +406,7 @@ Generate production-ready code following best practices.`;
   let code: string | null = null;
 
   const estimatedTokens = estimateTokens(prompt) + 2000;
+  const apiErrors: string[] = [];
 
   if (isAPIConfigured('qwen')) {
     try {
@@ -393,7 +416,9 @@ Generate production-ready code following best practices.`;
         onStatus
       );
     } catch (e) {
-      console.warn('Qwen API exhausted retries for new file...', e);
+      const errorMsg = `Qwen API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
@@ -405,11 +430,16 @@ Generate production-ready code following best practices.`;
         onStatus
       );
     } catch (e) {
-      console.warn('Groq API exhausted retries for new file...', e);
+      const errorMsg = `Groq API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
   if (!code) {
+    console.error('🚨 CRITICAL: All code generation APIs failed!');
+    console.error('📋 Failed APIs:', apiErrors);
+    console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits');
     throw new Error(`Failed to generate new file ${filePath} due to API rate limits. The pipeline has paused. Click Run to try this step again.`);
   }
 
@@ -419,16 +449,29 @@ Generate production-ready code following best practices.`;
 
 // ── Utility Functions ────────────────────────────────────────────────────────
 
-function cleanDiffOutput(output: string, filePath: string): string {
-  // Remove markdown code blocks
-  let cleaned = output.replace(/```(?:diff)?\n?/g, '').trim();
+function adjustDiffLineNumbers(diffText: string, offset: number): string {
+  const lines = diffText.split('\n');
+  const adjustedLines: string[] = [];
 
-  // Ensure proper diff headers
-  if (!cleaned.startsWith('---')) {
-    cleaned = `--- a/${filePath}\n+++ b/${filePath}\n${cleaned}`;
+  for (const line of lines) {
+    if (line.startsWith('@@')) {
+      // Parse hunk header like "@@ -1,5 +1,5 @@"
+      const match = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@/);
+      if (match) {
+        const oldStart = parseInt(match[1], 10) + offset;
+        const oldCount = parseInt(match[2], 10);
+        const newStart = parseInt(match[3], 10) + offset;
+        const newCount = parseInt(match[4], 10);
+        adjustedLines.push(`@@ -${oldStart},${oldCount} +${newStart},${newCount} @@`);
+      } else {
+        adjustedLines.push(line);
+      }
+    } else {
+      adjustedLines.push(line);
+    }
   }
 
-  return cleaned;
+  return adjustedLines.join('\n');
 }
 
 function cleanCodeOutput(code: string): string {

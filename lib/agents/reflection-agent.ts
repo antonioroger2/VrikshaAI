@@ -123,7 +123,7 @@ async function callGroqForReview(
     throw new Error('No review API configured');
   }
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/openai/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -141,8 +141,16 @@ async function callGroqForReview(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Groq API error: ${error}`);
+    const errorText = await response.text();
+    const errorDetails = {
+      status: response.status,
+      statusText: response.statusText,
+      url: `${baseUrl}/openai/v1/chat/completions`,
+      headers: Object.fromEntries(response.headers.entries()),
+      body: errorText,
+    };
+    console.error('🔍 Detailed Groq API Error (Code Review):', JSON.stringify(errorDetails, null, 2));
+    throw new Error(`Groq API error (${response.status} ${response.statusText}): ${errorText}`);
   }
 
   const data = await response.json();
@@ -197,6 +205,7 @@ ${diff.patchedContent}
   let response: string | null = null;
 
   const estimatedTokens = estimateTokens(diff.diff + diff.patchedContent) + 500;
+  const apiErrors: string[] = [];
 
   if (isAPIConfigured('gemini')) {
     try {
@@ -206,7 +215,9 @@ ${diff.patchedContent}
         onStatus
       );
     } catch (e) {
-      console.warn('Gemini API exhausted retries...', e);
+      const errorMsg = `Gemini API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
@@ -218,11 +229,16 @@ ${diff.patchedContent}
         onStatus
       );
     } catch (e) {
-      console.warn('Groq API exhausted retries...', e);
+      const errorMsg = `Groq API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
   if (!response) {
+    console.error('🚨 CRITICAL: All code review APIs failed!');
+    console.error('📋 Failed APIs:', apiErrors);
+    console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits');
     throw new Error(`Failed to review code changes for ${diff.filePath} due to API rate limits. The pipeline has paused. Click Run to try this step again.`);
   }
 
@@ -283,6 +299,7 @@ Please explain these changes in ${languageInfo.nativeName}.`;
   let samjhao: string | null = null;
 
   const estimatedTokens = estimateTokens(userPrompt) + 1000;
+  const apiErrors: string[] = [];
 
   if (isAPIConfigured('gemini')) {
     try {
@@ -292,7 +309,9 @@ Please explain these changes in ${languageInfo.nativeName}.`;
         onStatus
       );
     } catch (e) {
-      console.warn('Gemini API exhausted retries for Samjhao...', e);
+      const errorMsg = `Gemini API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
@@ -304,11 +323,16 @@ Please explain these changes in ${languageInfo.nativeName}.`;
         onStatus
       );
     } catch (e) {
-      console.warn('Groq API exhausted retries for Samjhao...', e);
+      const errorMsg = `Groq API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
   if (!samjhao) {
+    console.error('🚨 CRITICAL: All explanation APIs failed!');
+    console.error('📋 Failed APIs:', apiErrors);
+    console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits');
     throw new Error("Failed to generate explanation due to API rate limits. Please try again.");
   }
 
@@ -341,6 +365,7 @@ ${filesContext}`;
   let docs: string | null = null;
 
   const estimatedTokens = estimateTokens(prompt) + 1500;
+  const apiErrors: string[] = [];
 
   if (isAPIConfigured('gemini')) {
     try {
@@ -350,7 +375,9 @@ ${filesContext}`;
         onStatus
       );
     } catch (e) {
-      console.warn('Gemini API exhausted retries for deployment docs...', e);
+      const errorMsg = `Gemini API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
@@ -362,11 +389,16 @@ ${filesContext}`;
         onStatus
       );
     } catch (e) {
-      console.warn('Groq API exhausted retries for deployment docs...', e);
+      const errorMsg = `Groq API failed: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`❌ ${errorMsg}`);
+      apiErrors.push(errorMsg);
     }
   }
 
   if (!docs) {
+    console.error('🚨 CRITICAL: All deployment documentation APIs failed!');
+    console.error('📋 Failed APIs:', apiErrors);
+    console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits');
     throw new Error("Failed to generate deployment documentation due to API rate limits. Please try again.");
   }
 
