@@ -21,7 +21,7 @@ import type {
 import { estimateTokens } from '../langgraph-types';
 import { extractSymbols, extractChunk, extractSymbolsAST, extractChunkAST } from '../ast-parser';
 import { detectLanguage } from '../repo-db';
-import { createUnifiedDiff, applyPatch as applyUnifiedPatch, validatePatch } from '../diff-engine';
+import { createUnifiedDiff, validatePatch } from '../diff-engine';
 
 // ── System Prompts ───────────────────────────────────────────────────────────
 
@@ -301,9 +301,28 @@ export async function generateCodeEdit(
   }
 
   // Build the prompt for Qwen Coder
-  const prompt = `File: ${filePath}
+  let prompt: string;
+  let isFullFileEdit = !planStep.symbol;
+
+  if (isFullFileEdit) {
+    // For full file edits, generate complete new content instead of diff
+    prompt = `File: ${filePath}
 Language: ${language}
-Target: ${planStep.symbol || 'entire file'}
+
+Current Code:
+\`\`\`${language}
+${codeContext}
+\`\`\`
+
+Change Request: ${planStep.description}
+${planStep.rationale ? `Rationale: ${planStep.rationale}` : ''}
+
+Generate the COMPLETE new content for this file after making the requested changes. Return only the code, no explanations or markdown.`;
+  } else {
+    // For partial edits, generate new code for the chunk
+    prompt = `File: ${filePath}
+Language: ${language}
+Target: ${planStep.symbol}
 Lines: ${lineRange.start}-${lineRange.end}
 
 Current Code:
@@ -314,19 +333,19 @@ ${codeContext}
 Change Request: ${planStep.description}
 ${planStep.rationale ? `Rationale: ${planStep.rationale}` : ''}
 
-Generate a unified diff to make this change. Include 3 lines of context.
-${planStep.symbol ? 'IMPORTANT: Generate line numbers starting from 1 (relative to the code shown above).' : ''}`;
+Generate the new code for this section after making the requested changes. Return only the code, no explanations or markdown.`;
+  }
 
-  let diffOutput: string | null = null;
+  let output: string | null = null;
 
   const estimatedTokens = estimateTokens(prompt) + 1500;
   const apiErrors: string[] = [];
 
   if (isAPIConfigured('qwen')) {
     try {
-      diffOutput = await withSmartRetries(
+      output = await withSmartRetries(
         'qwen', estimatedTokens,
-        () => callQwenCoder(getCodeEditorPrompt(language), prompt),
+        () => callQwenCoder(isFullFileEdit ? getCodeEditorPrompt(language) : FILE_GENERATION_PROMPT, prompt),
         onStatus
       );
     } catch (e) {
@@ -336,11 +355,11 @@ ${planStep.symbol ? 'IMPORTANT: Generate line numbers starting from 1 (relative 
     }
   }
 
-  if (!diffOutput && isAPIConfigured('groq')) {
+  if (!output && isAPIConfigured('groq')) {
     try {
-      diffOutput = await withSmartRetries(
+      output = await withSmartRetries(
         'groq', estimatedTokens,
-        () => callGroqForCode(getCodeEditorPrompt(language), prompt),
+        () => callGroqForCode(isFullFileEdit ? getCodeEditorPrompt(language) : FILE_GENERATION_PROMPT, prompt),
         onStatus
       );
     } catch (e) {
@@ -351,32 +370,43 @@ ${planStep.symbol ? 'IMPORTANT: Generate line numbers starting from 1 (relative 
   }
 
   // DELETE `generateEditFallback`. Throw error instead.
-  if (!diffOutput) {
+  if (!output) {
     console.error('🚨 CRITICAL: All code editing APIs failed!');
     console.error('📋 Failed APIs:', apiErrors);
     console.error('💡 Troubleshooting: Check API keys, network connectivity, and rate limits');
     throw new Error(`Failed to generate code edit for ${filePath} due to API rate limits. The pipeline has paused. Click Run to try this step again.`);
   }
 
-  // Clean and validate the diff output
-  let cleanDiff = diffOutput.trim();
+  let patched: string;
+  let finalDiff: string = '';
 
-  // If we extracted a chunk, adjust the diff line numbers to match full file
-  if (planStep.symbol && codeContext !== originalContent) {
-    cleanDiff = adjustDiffLineNumbers(cleanDiff, lineRange.start - 1);
-  }
-
-  // Apply the diff to get patched content
-  const patched = applyUnifiedPatch(originalContent, cleanDiff);
-  if (patched === null) {
-    throw new Error(`Failed to apply generated diff for ${filePath}. The diff format may be invalid.`);
+  if (isFullFileEdit) {
+    // For full file edits, the output is the complete new content
+    patched = output.trim();
+    // Remove any markdown code blocks if present
+    patched = patched.replace(/```(?:\w+)?\n?/g, '').trim();
+  } else {
+    // For partial edits, replace the chunk with the new code
+    let newChunk = output.trim();
+    // Remove any markdown code blocks if present
+    newChunk = newChunk.replace(/```(?:\w+)?\n?/g, '').trim();
+    
+    // Replace the chunk in the original content
+    const lines = originalContent.split('\n');
+    const beforeChunk = lines.slice(0, lineRange.start - 1);
+    const afterChunk = lines.slice(lineRange.end);
+    const newChunkLines = newChunk.split('\n');
+    patched = [...beforeChunk, ...newChunkLines, ...afterChunk].join('\n');
+    
+    // Generate diff for display
+    finalDiff = createUnifiedDiff(filePath, originalContent, patched);
   }
 
   return {
     filePath,
     originalContent,
     patchedContent: patched,
-    diff: cleanDiff,
+    diff: finalDiff,
     targetSymbol: planStep.symbol,
     lineRange,
   };
@@ -448,31 +478,6 @@ Generate production-ready code following best practices.`;
 }
 
 // ── Utility Functions ────────────────────────────────────────────────────────
-
-function adjustDiffLineNumbers(diffText: string, offset: number): string {
-  const lines = diffText.split('\n');
-  const adjustedLines: string[] = [];
-
-  for (const line of lines) {
-    if (line.startsWith('@@')) {
-      // Parse hunk header like "@@ -1,5 +1,5 @@"
-      const match = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@/);
-      if (match) {
-        const oldStart = parseInt(match[1], 10) + offset;
-        const oldCount = parseInt(match[2], 10);
-        const newStart = parseInt(match[3], 10) + offset;
-        const newCount = parseInt(match[4], 10);
-        adjustedLines.push(`@@ -${oldStart},${oldCount} +${newStart},${newCount} @@`);
-      } else {
-        adjustedLines.push(line);
-      }
-    } else {
-      adjustedLines.push(line);
-    }
-  }
-
-  return adjustedLines.join('\n');
-}
 
 function cleanCodeOutput(code: string): string {
   // Remove markdown code blocks

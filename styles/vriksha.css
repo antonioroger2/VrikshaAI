@@ -5,20 +5,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+Devanagari:wght@400;600&display=swap');
 
 :root {
-  --soil:     #1a1208;
-  --bark:     #2e1f0a;
-  --moss:     #1d3a1f;
-  --leaf:     #2d6a2f;
-  --sprout:   #4caf50;
-  --lime:     #a8e063;
+  --soil:     #0a0a0a;
+  --bark:     #1a1a1a;
+  --moss:     #0d1f0e;
+  --leaf:     #1d3a1f;
+  --sprout:   #2d6a2f;
+  --lime:     #4caf50;
   --saffron:  #f5a623;
   --turmeric: #e8c547;
   --terracotta: #c0533a;
-  --cream:    #f5edd8;
-  --parchment:#ede0c0;
-  --ash:      #8a9d8b;
-  --glow:     rgba(168,224,99,0.15);
-  --terminal: #0d1f0e;
+  --cream:    #ffffff;
+  --parchment:#f5f5f5;
+  --ash:      #cccccc;
+  --glow:     rgba(76, 175, 80, 0.15);
+  --terminal: #000000;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
