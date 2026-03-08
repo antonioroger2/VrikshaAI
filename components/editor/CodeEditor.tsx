@@ -7,6 +7,7 @@
 
 import { useCallback, useRef, useEffect } from "react";
 import Editor, { type OnMount, type Monaco } from "@monaco-editor/react";
+import { FileCode2 } from "lucide-react";
 import { useRepoStore } from "@/store/repo-store";
 
 // Vriksha dark theme for Monaco
@@ -200,7 +201,7 @@ export default function CodeEditor() {
         </div>
       ) : (
         <div className="editor-empty">
-          <div className="editor-empty-icon">🌿</div>
+          <div className="editor-empty-icon"><FileCode2 size={44} strokeWidth={1.5} /></div>
           <div className="editor-empty-title">VRIKSHA.ai Editor</div>
           <div className="editor-empty-sub">
             Open a file from the File Tree, or create a new one.

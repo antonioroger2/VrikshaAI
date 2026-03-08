@@ -6,6 +6,20 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Braces,
+  File,
+  FileCode2,
+  FileText,
+  Folder,
+  FolderOpen,
+  Globe,
+  Palette,
+  Plus,
+  RefreshCw,
+  Settings2,
+  TerminalSquare,
+} from "lucide-react";
 import { useRepoStore } from "@/store/repo-store";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -66,25 +80,33 @@ function buildTree(paths: string[]): TreeNode[] {
 
 // ── File icon helper ──────────────────────────────────────────────────────────
 
-function fileIcon(name: string, isDir: boolean, expanded: boolean): string {
-  if (isDir) return expanded ? "📂" : "📁";
+function fileIcon(name: string, isDir: boolean, expanded: boolean): React.ReactNode {
+  if (isDir) return expanded ? <FolderOpen size={14} /> : <Folder size={14} />;
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   switch (ext) {
     case "ts":
-    case "tsx": return "🟦";
+    case "tsx":
     case "js":
-    case "jsx": return "🟨";
-    case "tf":  return "🟪";
-    case "py":  return "🐍";
-    case "json": return "📋";
-    case "css": return "🎨";
-    case "html": return "🌐";
-    case "md":  return "📝";
+    case "jsx":
+    case "tf":
+    case "py":
+      return <FileCode2 size={14} />;
+    case "json":
+      return <Braces size={14} />;
+    case "css":
+      return <Palette size={14} />;
+    case "html":
+      return <Globe size={14} />;
+    case "md":
+      return <FileText size={14} />;
     case "yaml":
-    case "yml": return "⚙️";
+    case "yml":
+      return <Settings2 size={14} />;
     case "sh":
-    case "bash": return "🖥️";
-    default: return "📄";
+    case "bash":
+      return <TerminalSquare size={14} />;
+    default:
+      return <File size={14} />;
   }
 }
 
@@ -219,7 +241,9 @@ export default function FileTree() {
             {/* Creating new item inside this folder */}
             {creating && creating.parentPath === node.path && (
               <div className="file-tree-item creating" style={{ paddingLeft: `${(node.depth + 2) * 16 + 8}px` }}>
-                <span className="file-tree-icon">{creating.type === "folder" ? "📁" : "📄"}</span>
+                <span className="file-tree-icon">
+                  {creating.type === "folder" ? <Folder size={14} /> : <File size={14} />}
+                </span>
                 <input
                   ref={inputRef}
                   className="file-tree-input"
@@ -245,7 +269,7 @@ export default function FileTree() {
     <div className="file-tree">
       <div className="file-tree-header">
         <span className="panel-title">
-          Explorer <span className="accent">Files</span>
+          <span className="accent">Files</span>
         </span>
         <div className="file-tree-actions">
           <button
@@ -253,17 +277,19 @@ export default function FileTree() {
             title="New File"
             onClick={() => { setCreating({ parentPath: "", type: "file" }); setNewName(""); }}
           >
-            +📄
+            <Plus size={12} />
+            <File size={13} />
           </button>
           <button
             className="file-tree-action-btn"
             title="New Folder"
             onClick={() => { setCreating({ parentPath: "", type: "folder" }); setNewName(""); }}
           >
-            +📁
+            <Plus size={12} />
+            <Folder size={13} />
           </button>
           <button className="file-tree-action-btn" title="Refresh" onClick={() => loadRepo()}>
-            ↻
+            <RefreshCw size={14} />
           </button>
         </div>
       </div>
@@ -272,7 +298,9 @@ export default function FileTree() {
         {/* Root-level creation */}
         {creating && creating.parentPath === "" && (
           <div className="file-tree-item creating" style={{ paddingLeft: "8px" }}>
-            <span className="file-tree-icon">{creating.type === "folder" ? "📁" : "📄"}</span>
+            <span className="file-tree-icon">
+              {creating.type === "folder" ? <Folder size={14} /> : <File size={14} />}
+            </span>
             <input
               ref={inputRef}
               className="file-tree-input"
@@ -291,7 +319,9 @@ export default function FileTree() {
 
         {files.length === 0 && (
           <div className="file-tree-empty">
-            <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>🌱</div>
+            <div style={{ marginBottom: "0.5rem", opacity: 0.65 }}>
+              <FolderOpen size={28} strokeWidth={1.6} />
+            </div>
             <div>No files yet</div>
             <div style={{ fontSize: "0.6rem", marginTop: "0.25rem", opacity: 0.6 }}>
               Create a file or import a project

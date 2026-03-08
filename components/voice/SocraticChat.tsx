@@ -3,7 +3,7 @@
  *
  * Features:
  *  - Chat bubbles with AnimatePresence spring entry
- *  - 🔊 Play Audio button on every AI message
+ *  - Play Audio button on every AI message
  *  - Auto-TTS toggle (reads AI responses aloud via Web Speech API)
  *  - Language-aware TTS (hi-IN, ta-IN, te-IN, …)
  *  - Mic button → startRecording + transcribeAudio from voice-input.ts
@@ -13,6 +13,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUp, Bot, Languages, Mic, Square, Trash2, Volume2 } from "lucide-react";
 import { useAgentStore, type AgentMessage } from "@/store/agent-store";
 import { useRepoStore } from "@/store/repo-store";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/lib/api-config";
@@ -227,14 +228,17 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
       <div className="vw-chat-header">
         <div className="vw-chat-header-left">
           <span className="vw-chat-title">
-            Socratic <span className="vw-accent">Dialogue</span>
+            {inputLanguage === "hi" ? "भारत-AGENT" :
+             inputLanguage === "ta" ? "பாரத்-AGENT" :
+             inputLanguage === "te" ? "భారత్-AGENT" :
+             "भारत-AGENT"}
           </span>
-          {running && <span className="vw-running-badge">⚡ Processing</span>}
+          {running && <span className="vw-running-badge">Processing</span>}
         </div>
         <div className="vw-chat-header-right">
           {/* TTS Language chooser */}
           <div className="vw-tts-language-chooser">
-            <span className="vw-tts-lang-label">🗣</span>
+            <span className="vw-tts-lang-label"><Languages size={13} /></span>
             <select
               className="vw-tts-lang-select"
               value={inputLanguage}
@@ -270,14 +274,21 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             title="Clear chat"
             disabled={messages.length === 0}
           >
-            Clear Chat
+            <Trash2 size={14} />
+            <span>Clear Chat</span>
           </button>
           {running && (
             <button className="vw-stop-btn" onClick={stopAgent}>
-              ■ Stop
+              <Square size={13} />
+              <span>Stop</span>
             </button>
           )}
         </div>
+      </div>
+
+      {/* ── Tagline ── */}
+      <div className="vw-chat-tagline">
+        Voice-First System Architect Buddy... Start Building in your own language
       </div>
 
       {/* ── Language badge ── */}
@@ -294,7 +305,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="vw-empty-icon">🌿</div>
+            <div className="vw-empty-icon"><Bot size={44} strokeWidth={1.5} /></div>
             <div className="vw-empty-title">Ask VRIKSHA Anything</div>
             <div className="vw-empty-sub">
               Speak or type in Hindi, Tamil, Telugu, or any Indian language.
@@ -320,7 +331,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
               transition={{ type: "spring", stiffness: 320, damping: 28 }}
             >
               <p className="vw-bubble-role">
-                {msg.role === "user" ? "You" : msg.role === "agent" ? "🌿 VRIKSHA" : "⚙ System"}
+                {msg.role === "user" ? "You" : msg.role === "agent" ? "VRIKSHA" : "System"}
               </p>
               <div className="vw-bubble-text">
                 <RichText text={msg.text} />
@@ -331,7 +342,8 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
                   onClick={() => playSpeech(msg.text, msg.id)}
                   title="Play audio"
                 >
-                  {playingId === msg.id ? "⏹ Stop" : "🔊 Play Audio"}
+                  {playingId === msg.id ? <Square size={13} /> : <Volume2 size={13} />}
+                  <span>{playingId === msg.id ? "Stop" : "Play Audio"}</span>
                 </button>
               )}
             </motion.div>
@@ -385,13 +397,13 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
           title={orbState === "listening" ? "Stop recording" : "Start voice input"}
           aria-label="Microphone"
         >
-          {orbState === "listening" ? "⏹" : "🎙️"}
+          {orbState === "listening" ? <Square size={22} /> : <Mic size={22} />}
         </button>
 
         <div className="vw-input-bar">
           <textarea
             className="vw-textarea"
-            value={transcribing ? "🎙 Transcribing…" : input}
+            value={transcribing ? "Transcribing..." : input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your goal, or tap the mic…"
@@ -404,7 +416,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             disabled={!input.trim() || running}
             title="Send"
           >
-            ↑
+            <ArrowUp size={16} />
           </button>
         </div>
       </div>

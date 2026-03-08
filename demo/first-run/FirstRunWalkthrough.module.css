@@ -306,95 +306,235 @@
   transition: all 0.3s ease;
 }
 
-.spotlightHole {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 8px;
+/* ── SVG overlay: dark everywhere with transparent cutout ── */
+.svgOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 145;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: auto;
+}
+
+/* Pulsing glow on the cutout border */
+.glowRect {
+  animation: glowPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(168, 224, 99, 0.6));
+}
+
+@keyframes glowPulse {
+  0%, 100% { 
+    stroke: rgba(168, 224, 99, 0.6); 
+    stroke-width: 3; 
+    filter: drop-shadow(0 0 8px rgba(168, 224, 99, 0.4));
+  }
+  50% { 
+    stroke: rgba(168, 224, 99, 0.9); 
+    stroke-width: 5; 
+    filter: drop-shadow(0 0 16px rgba(168, 224, 99, 0.8));
+  }
+}
+
+/* Fallback scrim when no target element found */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 145;
+  background: rgba(6, 10, 8, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+/* ── Interactive tooltip card ── */
+.spotlightTooltip {
+  position: fixed;
+  z-index: 160;
+  pointer-events: auto;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(18, 24, 19, 0.98), rgba(9, 13, 11, 0.96));
+  border: 1px solid rgba(168, 224, 99, 0.22);
   box-shadow: 
-    0 0 0 9999px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 2px rgba(168, 224, 99, 0.3);
-  animation: pulse 2s infinite;
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(168, 224, 99, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: tooltipGlow 3s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(168, 224, 99, 0.3); }
-  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 0 4px rgba(168, 224, 99, 0.5); }
+@keyframes tooltipGlow {
+  0%, 100% { box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 224, 99, 0.2); }
+  50% { box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 224, 99, 0.4); }
 }
 
-.spotlightArrow {
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: 12px solid transparent;
+.tooltipHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.spotlightArrow.top {
-  border-bottom-color: rgba(168, 224, 99, 0.8);
-  top: -24px;
-  left: 50%;
-  transform: translateX(-50%);
+.tooltipStep {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  color: #a8e063;
+  letter-spacing: 0.08em;
 }
 
-.spotlightArrow.bottom {
-  border-top-color: rgba(168, 224, 99, 0.8);
-  bottom: -24px;
-  left: 50%;
-  transform: translateX(-50%);
+.tooltipEyebrow {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f5a623;
 }
 
-.spotlightArrow.left {
-  border-right-color: rgba(168, 224, 99, 0.8);
-  left: -24px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.spotlightArrow.right {
-  border-left-color: rgba(168, 224, 99, 0.8);
-  right: -24px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.spotlightText {
-  position: absolute;
-  background: rgba(18, 24, 19, 0.95);
+.tooltipTitle {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.2;
   color: #f5edd8;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  white-space: nowrap;
+}
+
+.tooltipText {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: rgba(245, 237, 216, 0.8);
+}
+
+.tooltipActions {
+  display: flex;
+}
+
+.learnMoreBtn {
+  padding: 7px 14px;
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: 8px;
+  background: rgba(245, 166, 35, 0.12);
+  color: #f5a623;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+  box-shadow: 0 0 8px rgba(245, 166, 35, 0.2);
+}
+
+.learnMoreBtn:hover {
+  background: rgba(245, 166, 35, 0.24);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(245, 166, 35, 0.4);
+}
+
+.tooltipNav {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tooltipNavBtn,
+.tooltipNavBtnPrimary {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.tooltipNavBtn {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f5edd8;
+}
+
+.tooltipNavBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.tooltipNavBtnPrimary {
+  background: linear-gradient(135deg, #f5a623, #4caf50);
+  color: #081109;
+  flex: 1;
+  text-align: center;
+}
+
+.tooltipNavBtn:hover:not(:disabled),
+.tooltipNavBtnPrimary:hover {
+  transform: translateY(-1px);
+}
+
+.tooltipSkipBtn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 237, 216, 0.5);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.tooltipSkipBtn:hover {
+  color: rgba(245, 237, 216, 0.8);
+}
+
+/* Step dots */
+.tooltipDots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(168, 224, 99, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.tooltipDot:hover {
+  border-color: rgba(168, 224, 99, 0.5);
+}
+
+.tooltipDotActive {
+  background: #a8e063;
+  border-color: #a8e063;
+  box-shadow: 0 0 8px rgba(168, 224, 99, 0.6);
+}
+
+/* ── Detail-mode header actions ── */
+.panelHeaderActions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.backToSpotlightBtn {
+  padding: 10px 14px;
+  border-radius: 999px;
   border: 1px solid rgba(168, 224, 99, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: rgba(168, 224, 99, 0.08);
+  color: #a8e063;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
 }
 
-.spotlightText.top {
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 8px;
-}
-
-.spotlightText.bottom {
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-}
-
-.spotlightText.left {
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-right: 8px;
-}
-
-.spotlightText.right {
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 8px;
+.backToSpotlightBtn:hover {
+  background: rgba(168, 224, 99, 0.16);
+  transform: translateY(-1px);
 }
 
 .secondaryButton,

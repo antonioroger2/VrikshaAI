@@ -49,9 +49,9 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
       },
     ],
     spotlight: {
-      selector: ".voice-workspace",
-      position: "center",
-      text: "The main split-screen workspace"
+      selector: ".voice-workspace-left",
+      position: "right",
+      text: "This is your main split-screen workspace — editor on the left, agent chat on the right!"
     }
   },
   {
@@ -93,7 +93,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     spotlight: {
       selector: ".vw-chat-panel",
       position: "right",
-      text: "The agent chat panel shows the builder flow"
+      text: "Genie says: The LangGraph agent loop runs here!"
     }
   },
   {
@@ -127,7 +127,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     spotlight: {
       selector: ".editor-area",
       position: "left",
-      text: "The Monaco editor shows surgical code edits"
+      text: "Genie says: Code chunks map here using Web-Tree-Sitter!"
     }
   },
   {
@@ -159,9 +159,9 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
       },
     ],
     spotlight: {
-      selector: ".search-panel",
-      position: "left",
-      text: "The search panel uses local embeddings and indexing"
+      selector: ".workspace-sidebar",
+      position: "right",
+      text: "Genie says: We are using Nomic Code Embedder + FlexSearch for local retrieval right here!"
     }
   },
   {
@@ -199,8 +199,8 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     ],
     spotlight: {
       selector: ".toolbar",
-      position: "top",
-      text: "The toolbar shows AWS status and file count"
+      position: "bottom",
+      text: "Genie says: Architecture status & AWS focus live up here!"
     }
   },
   {
@@ -232,9 +232,9 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
       },
     ],
     spotlight: {
-      selector: ".vw-mic-btn",
+      selector: ".vw-chat-panel",
       position: "right",
-      text: "Voice input supports Hindi, Tamil, and Telugu"
+      text: "Genie says: Multilingual translations route through Groq and local STT!"
     }
   },
 ];

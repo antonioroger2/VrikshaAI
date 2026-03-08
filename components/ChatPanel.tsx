@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { HINT_CHIPS } from '../lib/data';
+import { Play, Bot, User, Square, Mic, Send } from 'lucide-react';
 
 interface Message {
   role: 'ai' | 'user';
@@ -61,7 +62,7 @@ const ChatPanel = ({
             <span className="tag tag-green">Qwen Coder</span>
           </div>
           <button className="start-btn" onClick={handleStart}>
-            🌱 Begin Building
+            <Play size={16} style={{ marginRight: '0.5rem' }} /> Begin Building
           </button>
         </div>
       )}
@@ -87,7 +88,7 @@ const ChatPanel = ({
         {messages.map((msg, i) => (
           <div key={i} className={`msg ${msg.role}`}>
             <div className="msg-avatar">
-              {msg.role === "ai" ? "🌿" : "👤"}
+              {msg.role === "ai" ? <Bot size={20} /> : <User size={20} />}
             </div>
             <div>
               <div className="msg-bubble">
@@ -111,7 +112,7 @@ const ChatPanel = ({
 
         {isTyping && (
           <div className="msg ai">
-            <div className="msg-avatar">🌿</div>
+            <div className="msg-avatar"><Bot size={20} /></div>
             <div>
               <div className="typing-indicator">
                 <div className="typing-dot" />
@@ -131,7 +132,7 @@ const ChatPanel = ({
             onClick={toggleRecording}
             title={recording ? "Stop recording" : "Speak in Hindi/Tamil/Telugu"}
           >
-            {recording ? "⏹" : "🎙️"}
+            {recording ? <Square size={16} /> : <Mic size={16} />}
           </button>
           <textarea
             ref={inputRef}
@@ -149,7 +150,7 @@ const ChatPanel = ({
             }}
           />
           <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim() || isTyping}>
-            ➤
+            <Send size={16} />
           </button>
         </div>
         <div className="input-hints">

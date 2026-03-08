@@ -150,6 +150,9 @@
   color: var(--ash);
   cursor: pointer;
   font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all 0.15s;
 }
 
@@ -185,6 +188,9 @@
   color: var(--ash);
   cursor: pointer;
   font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all 0.15s;
   white-space: nowrap;
 }
@@ -287,6 +293,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 1px;
   transition: all 0.15s;
 }
 
@@ -331,10 +338,11 @@
 }
 
 .file-tree-icon {
-  font-size: 0.75rem;
   flex-shrink: 0;
   width: 18px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-tree-name {
@@ -553,8 +561,10 @@
 }
 
 .editor-empty-icon {
-  font-size: 3rem;
   opacity: 0.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .editor-empty-title {
@@ -1082,8 +1092,10 @@
 }
 
 .search-icon {
-  font-size: 0.75rem;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-input {
@@ -1187,6 +1199,9 @@
   color: var(--ash);
   cursor: pointer;
   font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all 0.15s;
 }
 

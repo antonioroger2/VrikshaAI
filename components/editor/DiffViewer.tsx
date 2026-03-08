@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Clipboard } from "lucide-react";
 import { parseDiffLines, type DiffLine } from "@/lib/diff-engine";
 
 interface DiffViewerProps {
@@ -21,7 +22,7 @@ export default function DiffViewer({ diffText, fileName }: DiffViewerProps) {
     <div className="diff-viewer">
       <div className="diff-viewer-header">
         <div className="diff-viewer-file">
-          <span className="diff-viewer-icon">📋</span>
+          <span className="diff-viewer-icon"><Clipboard size={16} /></span>
           {fileName ?? "Diff Patch"}
         </div>
         <div className="diff-viewer-controls">

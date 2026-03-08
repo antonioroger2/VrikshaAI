@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { RefreshCw, Search } from "lucide-react";
 import { useRepoStore } from "@/store/repo-store";
 import { searchFiles, searchPaths, buildSearchIndex, type SearchResult } from "@/lib/search-engine";
 
@@ -89,7 +90,7 @@ export default function SearchPanel() {
       </div>
 
       <div className="search-input-wrap">
-        <span className="search-icon">🔍</span>
+        <span className="search-icon"><Search size={14} /></span>
         <input
           ref={inputRef}
           className="search-input"
@@ -151,7 +152,7 @@ export default function SearchPanel() {
 
         {!searching && query && results.length === 0 && pathResults.length === 0 && indexed && (
           <div className="search-empty">
-            <div style={{ fontSize: "1.2rem", marginBottom: "0.4rem" }}>🔍</div>
+            <div style={{ marginBottom: "0.4rem", opacity: 0.7 }}><Search size={20} /></div>
             <div>No results found</div>
           </div>
         )}
@@ -162,7 +163,8 @@ export default function SearchPanel() {
               <div>Search across all files in the browser repo.</div>
               <div style={{ marginTop: "0.5rem" }}>
                 <button className="search-reindex-btn" onClick={handleReindex}>
-                  ↻ Rebuild Index
+                  <RefreshCw size={13} />
+                  <span>Rebuild Index</span>
                 </button>
               </div>
             </div>

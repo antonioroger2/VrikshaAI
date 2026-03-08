@@ -111,6 +111,18 @@
   gap: 0.6rem;
 }
 
+/* ── Tagline ───────────────────────────────────────────────────────────────── */
+
+.vw-chat-tagline {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: rgba(245, 237, 216, 0.7);
+  text-align: center;
+  border-bottom: 1px solid rgba(168, 224, 99, 0.08);
+  background: rgba(15, 10, 3, 0.8);
+}
+
 /* ── Auto-TTS Toggle ──────────────────────────────────────────────────────── */
 
 .vw-autoplay-toggle {
@@ -171,8 +183,10 @@
 }
 
 .vw-tts-lang-label {
-  font-size: 0.6rem;
   color: var(--ash);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .vw-tts-lang-select {
@@ -251,6 +265,9 @@
   cursor: pointer;
   font-size: 0.65rem;
   font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all 0.2s;
 }
 
@@ -267,6 +284,9 @@
   cursor: pointer;
   font-size: 0.65rem;
   font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all 0.2s;
 }
 
@@ -306,7 +326,12 @@
   padding: 2rem;
 }
 
-.vw-empty-icon { font-size: 3rem; opacity: 0.6; }
+.vw-empty-icon {
+  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .vw-empty-title {
   font-family: 'Syne', sans-serif;
@@ -516,7 +541,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
   transition: all 0.3s;
   box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
 }
@@ -581,7 +605,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
   transition: all 0.2s;
   flex-shrink: 0;
 }
@@ -632,7 +655,9 @@
 }
 
 .vw-orb-icon {
-  font-size: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .vw-orb-label {

@@ -5,6 +5,18 @@
 "use client";
 
 import { useRef, useState } from "react";
+import {
+  Compass,
+  Download,
+  FileJson,
+  FolderOpen,
+  Mic,
+  Play,
+  Search,
+  Square,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useRepoStore } from "@/store/repo-store";
 import { buildSearchIndex } from "@/lib/search-engine";
 import TreeLogo from "@/components/TreeLogo";
@@ -156,14 +168,16 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
             onClick={() => setActivePanel("files")}
             title="File Explorer"
           >
-            📁 Files
+            <FolderOpen size={14} />
+            <span>Files</span>
           </button>
           <button
             className={`toolbar-nav-btn ${activePanel === "search" ? "active" : ""}`}
             onClick={() => setActivePanel("search")}
             title="Search"
           >
-            🔍 Search
+            <Search size={14} />
+            <span>Search</span>
           </button>
         </div>
       </div>
@@ -172,25 +186,30 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
         <span className="toolbar-file-count">{files.length} files</span>
 
         <button className="toolbar-btn" onClick={handleLoadDemo} title="Load demo project">
-          🌱 Demo
+          <Play size={14} />
+          <span>Demo</span>
         </button>
 
         <div className="toolbar-separator" />
 
         <button className="toolbar-btn" onClick={handleImportClick} disabled={importing}>
-          {importing ? "⏳" : "📥"} Import
+          <Upload size={14} />
+          <span>{importing ? "Importing" : "Import"}</span>
         </button>
         <button className="toolbar-btn" onClick={handleImportJson}>
-          📋 JSON
+          <FileJson size={14} />
+          <span>JSON</span>
         </button>
         <button className="toolbar-btn" onClick={handleExport}>
-          📤 Export
+          <Download size={14} />
+          <span>Export</span>
         </button>
 
         <div className="toolbar-separator" />
 
         <button className="toolbar-btn danger" onClick={handleClear}>
-          🗑 Clear
+          <Trash2 size={14} />
+          <span>Clear</span>
         </button>
 
         <div className="toolbar-separator" />
@@ -200,13 +219,14 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
           onClick={handleVoiceClick}
           title="Voice Input"
         >
-          {voiceRecording ? '🔴' : '🎤'}
+          {voiceRecording ? <Square size={14} /> : <Mic size={14} />}
         </button>
 
         <div className="toolbar-separator" />
 
         <button className="toolbar-btn" onClick={handleReplayTour} title="Replay first-run walkthrough">
-          🎯 Tour
+          <Compass size={14} />
+          <span>Tour</span>
         </button>
       </div>
     </header>

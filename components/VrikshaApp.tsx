@@ -115,27 +115,35 @@ export default function VrikshaApp() {
         }} />
       ))}
 
-      <Header lang={lang} setLang={setLang} />
+      <div className="vw-toolbar" style={{ position: 'relative', zIndex: 10 }}>
+        <Header lang={lang} setLang={setLang} />
+      </div>
 
       {/* Main 3-column layout */}
-      <main className="main">
-        <PipelineSidebar nodes={nodes} stats={stats} tokenUsed={tokenUsed} lang={lang} />
+      <main className="main voice-workspace">
+        <div className="sidebar-panel">
+          <PipelineSidebar nodes={nodes} stats={stats} tokenUsed={tokenUsed} lang={lang} />
+        </div>
 
-        <ChatPanel
-          showWelcome={showWelcome}
-          lang={lang}
-          messages={messages}
-          isTyping={isTyping}
-          input={input}
-          setInput={setInput}
-          recording={recording}
-          handleStart={handleStart}
-          handleSend={handleSend}
-          toggleRecording={toggleRecording}
-          handleChip={handleChip}
-        />
+        <div className="vw-chat-panel" style={{ display: 'flex', flexDirection: 'column' }}>
+          <ChatPanel
+            showWelcome={showWelcome}
+            lang={lang}
+            messages={messages}
+            isTyping={isTyping}
+            input={input}
+            setInput={setInput}
+            recording={recording}
+            handleStart={handleStart}
+            handleSend={handleSend}
+            toggleRecording={toggleRecording}
+            handleChip={handleChip}
+          />
+        </div>
 
-        <CodeOutputPanel activeTab={activeTab} setActiveTab={setActiveTab} stats={stats} lang={lang} />
+        <div className="editor-area" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          <CodeOutputPanel activeTab={activeTab} setActiveTab={setActiveTab} stats={stats} lang={lang} />
+        </div>
       </main>
     </div>
   );

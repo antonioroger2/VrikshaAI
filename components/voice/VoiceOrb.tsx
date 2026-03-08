@@ -5,6 +5,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Bot, Mic, Volume2 } from "lucide-react";
 
 export type OrbState = "idle" | "listening" | "speaking";
 
@@ -97,7 +98,7 @@ export default function VoiceOrb({ state, onClick }: VoiceOrbProps) {
         whileTap={{ scale: 0.92 }}
       >
         <span className="vw-orb-icon" aria-hidden="true">
-          {state === "listening" ? "🎙️" : state === "speaking" ? "🔊" : "🌿"}
+          {state === "listening" ? <Mic size={26} /> : state === "speaking" ? <Volume2 size={26} /> : <Bot size={26} />}
         </span>
       </motion.div>
 
