@@ -135,6 +135,10 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
     await buildSearchIndex();
   };
 
+  const handleReplayTour = () => {
+    window.dispatchEvent(new Event('replay-tour'));
+  };
+
   return (
     <header className="toolbar">
       <div className="toolbar-left">
@@ -199,16 +203,11 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
           {voiceRecording ? '🔴' : '🎤'}
         </button>
 
-        {/* Hidden file input for folder upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          // @ts-expect-error webkitdirectory is valid
-          webkitdirectory=""
-          multiple
-          style={{ display: "none" }}
-          onChange={handleFileInput}
-        />
+        <div className="toolbar-separator" />
+
+        <button className="toolbar-btn" onClick={handleReplayTour} title="Replay first-run walkthrough">
+          🎯 Tour
+        </button>
       </div>
     </header>
   );

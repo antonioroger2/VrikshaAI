@@ -1,0 +1,467 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(245, 166, 35, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(76, 175, 80, 0.2), transparent 30%),
+    rgba(6, 10, 8, 0.84);
+  backdrop-filter: blur(18px);
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1200px, 100%);
+  min-height: min(760px, calc(100vh - 56px));
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(168, 224, 99, 0.16);
+  background:
+    linear-gradient(145deg, rgba(18, 24, 19, 0.98), rgba(9, 13, 11, 0.95));
+  box-shadow:
+    0 26px 80px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  background:
+    linear-gradient(180deg, rgba(245, 166, 35, 0.08), rgba(76, 175, 80, 0.05)),
+    rgba(16, 20, 15, 0.9);
+  border-right: 1px solid rgba(168, 224, 99, 0.1);
+}
+
+.kicker,
+.eyebrow {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f5a623;
+}
+
+.railTitle {
+  margin: 12px 0 10px;
+  font-family: "Syne", sans-serif;
+  font-size: 1.75rem;
+  line-height: 1.05;
+  color: #f5edd8;
+}
+
+.railCopy {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: rgba(245, 237, 216, 0.72);
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stepButton {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(168, 224, 99, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(245, 237, 216, 0.72);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  text-align: left;
+}
+
+.stepButton:hover {
+  transform: translateX(2px);
+  border-color: rgba(168, 224, 99, 0.22);
+  background: rgba(168, 224, 99, 0.06);
+}
+
+.stepButtonActive {
+  border-color: rgba(245, 166, 35, 0.28);
+  background: linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(76, 175, 80, 0.08));
+  color: #f5edd8;
+}
+
+.stepIndex {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.74rem;
+  color: #a8e063;
+}
+
+.stepText {
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.progressCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(168, 224, 99, 0.12);
+  background: rgba(9, 14, 10, 0.9);
+}
+
+.progressPill {
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(76, 175, 80, 0.16);
+  color: #a8e063;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+}
+
+.progressText {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(245, 237, 216, 0.7);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(76, 175, 80, 0.08), transparent 30%),
+    rgba(10, 15, 12, 0.94);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 10px 0 0;
+  font-family: "Syne", sans-serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: #f5edd8;
+  max-width: 12ch;
+}
+
+.summary {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 1rem;
+  line-height: 1.72;
+  color: rgba(245, 237, 216, 0.76);
+}
+
+.closeButton,
+.secondaryButton,
+.primaryButton {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+}
+
+.closeButton {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 237, 216, 0.78);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.74rem;
+}
+
+.closeButton:hover,
+.secondaryButton:hover,
+.primaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card,
+.flowCard {
+  border-radius: 22px;
+  border: 1px solid rgba(168, 224, 99, 0.12);
+  background: rgba(15, 19, 16, 0.82);
+  padding: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.cardTitle {
+  margin-bottom: 14px;
+  font-family: "Syne", sans-serif;
+  font-size: 1rem;
+  color: #a8e063;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.highlightPill {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.18);
+  color: #f5edd8;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.moduleList,
+.flowList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.moduleItem,
+.flowItem {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(168, 224, 99, 0.08);
+}
+
+.moduleLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f5edd8;
+}
+
+.moduleFile,
+.inlinePath {
+  margin-top: 6px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  color: #a8e063;
+}
+
+.moduleNote {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: rgba(245, 237, 216, 0.7);
+}
+
+.flowItem {
+  color: rgba(245, 237, 216, 0.78);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.footerNote {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: rgba(245, 237, 216, 0.65);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Spotlight Effects */
+.spotlight {
+  position: fixed;
+  z-index: 150;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.spotlightHole {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  box-shadow: 
+    0 0 0 9999px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 2px rgba(168, 224, 99, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(168, 224, 99, 0.3); }
+  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), inset 0 0 0 4px rgba(168, 224, 99, 0.5); }
+}
+
+.spotlightArrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
+}
+
+.spotlightArrow.top {
+  border-bottom-color: rgba(168, 224, 99, 0.8);
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.spotlightArrow.bottom {
+  border-top-color: rgba(168, 224, 99, 0.8);
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.spotlightArrow.left {
+  border-right-color: rgba(168, 224, 99, 0.8);
+  left: -24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.spotlightArrow.right {
+  border-left-color: rgba(168, 224, 99, 0.8);
+  right: -24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.spotlightText {
+  position: absolute;
+  background: rgba(18, 24, 19, 0.95);
+  color: #f5edd8;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid rgba(168, 224, 99, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.spotlightText.top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+}
+
+.spotlightText.bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+}
+
+.spotlightText.left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+}
+
+.spotlightText.right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+}
+
+.secondaryButton,
+.primaryButton {
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78rem;
+}
+
+.secondaryButton {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5edd8;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #f5a623, #4caf50);
+  color: #081109;
+  box-shadow: 0 10px 26px rgba(76, 175, 80, 0.24);
+}
+
+@media (max-width: 1080px) {
+  .overlay {
+    padding: 18px;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    max-height: calc(100vh - 36px);
+    overflow: auto;
+  }
+
+  .rail {
+    border-right: none;
+    border-bottom: 1px solid rgba(168, 224, 99, 0.1);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .panel,
+  .rail {
+    padding: 22px;
+  }
+
+  .panelHeader,
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .secondaryButton,
+  .primaryButton,
+  .closeButton {
+    width: 100%;
+  }
+}

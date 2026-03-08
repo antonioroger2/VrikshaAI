@@ -67,7 +67,7 @@ const ChatPanel = ({
       )}
 
       <div className="panel-header" style={{ background: "rgba(13,20,10,0.9)" }}>
-        <span className="panel-title">Socratic <span className="accent">Conversation</span></span>
+        <span className="panel-title">Voice-First<span className="accent">Bharath Builder</span></span>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {recording && (
             <div className="waveform">
