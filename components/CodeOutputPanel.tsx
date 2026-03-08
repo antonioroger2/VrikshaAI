@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { Zap, FileText, Clipboard } from 'lucide-react';
 import { CODE_FILES } from '../lib/codeFiles';
 import DiffBlock from './DiffBlock';
 
@@ -36,7 +37,7 @@ const CodeOutputPanel = ({ activeTab, setActiveTab, stats, lang }: CodeOutputPan
             className={`code-tab ${activeTab === f ? "active" : ""}`}
             onClick={() => setActiveTab(f)}
           >
-            {f === "diff-patch" ? "📋 diff" : `📄 ${f}`}
+            {f === "diff-patch" ? <><Clipboard size={14} /> diff</> : <><FileText size={14} /> {f}</>}
           </button>
         ))}
       </div>
@@ -83,11 +84,11 @@ const CodeOutputPanel = ({ activeTab, setActiveTab, stats, lang }: CodeOutputPan
             ["✓", "green", "Operational Excellence"],
             ["✓", "green", "Security — IAM least-privilege"],
             ["✓", "green", "Reliability — Multi-AZ"],
-            ["⚡", "orange", "Performance — Pending review"],
+            [<Zap size={14} />, "orange", "Performance — Pending review"],
             ["○", "ash", "Cost Optimization — Calculating"],
           ].map(([icon, color, label]) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-              <span style={{ color: `var(--${color})` }}>{icon}</span>
+            <div key={String(label)} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+              <span style={{ color: `var(--${color})`, display: 'inline-flex', alignItems: 'center' }}>{icon}</span>
               <span>{label}</span>
             </div>
           ))}

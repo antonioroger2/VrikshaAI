@@ -12,6 +12,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Check, Folder, Lock, Package } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ export default function LocalLinkTerminal() {
   const handleDeploy = () => {
     if (deploying) return;
     setDeploying(true);
-    showToast("📦 Zipping files… Export & Deploy is coming soon! Stay tuned.", 4000);
+    showToast("Zipping files… Export & Deploy is coming soon! Stay tuned.", 4000);
     // Add terminal flavour lines
     const addLine = (text: string, type: TerminalLine["type"] = "output") => {
       setLines((prev) => [
@@ -88,11 +89,11 @@ export default function LocalLinkTerminal() {
     };
     setOpen(true);
     addLine("$ vriksha export --target=vercel", "input");
-    setTimeout(() => addLine("  📁  Collecting files…"), 600);
-    setTimeout(() => addLine("  🔒  Validating environment…"), 1200);
-    setTimeout(() => addLine("  📦  Building production bundle…"), 2000);
+    setTimeout(() => addLine("  Collecting files…"), 600);
+    setTimeout(() => addLine("  Validating environment…"), 1200);
+    setTimeout(() => addLine("  Building production bundle…"), 2000);
     setTimeout(() => {
-      addLine("  ✅  Done! (sandbox — no real deploy occurred)", "system");
+      addLine("  Done! (sandbox — no real deploy occurred)", "system");
       setDeploying(false);
     }, 3000);
   };
@@ -164,7 +165,7 @@ export default function LocalLinkTerminal() {
                   />
                   <span className="vw-toggle-slider" />
                   <span className="vw-toggle-label-sm">
-                    {bashConnected ? "🔴 Sandbox" : "Connect Bash"}
+                    {bashConnected ? "Sandbox" : "Connect Bash"}
                   </span>
                 </label>
 
@@ -186,7 +187,7 @@ export default function LocalLinkTerminal() {
                   transition={deploying ? { duration: 0.9, repeat: Infinity } : {}}
                   disabled={deploying}
                 >
-                  {deploying ? "📦 Packaging…" : "🚀 Export & Deploy"}
+                  {deploying ? "Packaging…" : "Export & Deploy"}
                 </motion.button>
               </div>
             </div>

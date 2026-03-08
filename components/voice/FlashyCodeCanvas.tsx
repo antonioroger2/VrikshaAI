@@ -11,20 +11,47 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Braces,
+  Database,
+  File,
+  FileCode2,
+  FileText,
+  Globe,
+  Hammer,
+  Palette,
+  Settings,
+  Terminal,
+  Zap,
+  Bot,
+} from "lucide-react";
 import { useRepoStore } from "@/store/repo-store";
 
 // ── File icon helper ─────────────────────────────────────────────────────────
 
-const FILE_ICONS: Record<string, string> = {
-  ts: "🔷", tsx: "⚛️", js: "🟡", jsx: "⚛️", py: "🐍",
-  json: "📋", md: "📝", css: "🎨", html: "🌐",
-  yaml: "⚙️", yml: "⚙️", sh: "💻", sql: "🗄️",
-  tf: "🏗️", go: "🐹", rs: "🦀", toml: "⚙️",
+const FILE_ICONS: Record<string, React.ReactNode> = {
+  ts: <FileCode2 size={14} />,
+  tsx: <FileCode2 size={14} />,
+  js: <FileCode2 size={14} />,
+  jsx: <FileCode2 size={14} />,
+  py: <FileCode2 size={14} />,
+  json: <Braces size={14} />,
+  md: <FileText size={14} />,
+  css: <Palette size={14} />,
+  html: <Globe size={14} />,
+  yaml: <Settings size={14} />,
+  yml: <Settings size={14} />,
+  sh: <Terminal size={14} />,
+  sql: <Database size={14} />,
+  tf: <Hammer size={14} />,
+  go: <FileCode2 size={14} />,
+  rs: <FileCode2 size={14} />,
+  toml: <Settings size={14} />,
 };
 
-function fileIcon(path: string) {
+function fileIcon(path: string): React.ReactNode {
   const ext = path.split(".").pop() ?? "";
-  return FILE_ICONS[ext] ?? "📄";
+  return FILE_ICONS[ext] ?? <File size={14} />;
 }
 
 function shortName(path: string) {
@@ -168,7 +195,7 @@ export default function FlashyCodeCanvas() {
           <>
             <div className="vw-canvas-code-header">
               <span className="vw-canvas-filename">{activeFile}</span>
-              {typing && <span className="vw-writing-badge">⚡ Writing…</span>}
+              {typing && <span className="vw-writing-badge"><Zap size={12} /> Writing…</span>}
             </div>
 
             <pre className={`vw-canvas-code ${typing ? "typing-glow" : ""} ${neonFlash && !typing ? "neon-flash-in" : ""}`}>
@@ -185,7 +212,7 @@ export default function FlashyCodeCanvas() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <span className="vw-canvas-placeholder-icon">🌿</span>
+            <span className="vw-canvas-placeholder-icon"><Bot size={44} strokeWidth={1.5} /></span>
             <p>The AI will build your code here in real time.</p>
             <p className="vw-canvas-placeholder-sub">
               Select a file from the tree or ask VRIKSHA to create one.
