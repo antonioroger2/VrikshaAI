@@ -1,6 +1,6 @@
 /**
  * EditorWorkspace — Main layout that composes the full code editor experience:
- *   Toolbar + Sidebar (FileTree or Search or Agent) + Monaco Editor
+ *   Toolbar + Sidebar (FileTree or Search) + Monaco Editor
  *
  * This replaces the old VrikshaApp mock with a real, functional dev tool.
  */
@@ -13,15 +13,12 @@ import { buildSearchIndex } from "@/lib/search-engine";
 import Toolbar from "./Toolbar";
 import FileTree from "./FileTree";
 import CodeEditor from "./CodeEditor";
-import AgentPanel from "./AgentPanel";
 import SearchPanel from "./SearchPanel";
 
 export default function EditorWorkspace() {
   const loadRepo = useRepoStore((s) => s.loadRepo);
-  const [activePanel, setActivePanel] = useState<"files" | "search" | "agent">("files");
+  const [activePanel, setActivePanel] = useState<"files" | "search">("files");
   const [sidebarWidth, setSidebarWidth] = useState(280);
-  const [rightPanelWidth, setRightPanelWidth] = useState(380);
-  const [showRightPanel, setShowRightPanel] = useState(true);
   const [ready, setReady] = useState(false);
 
   // Initialize repo + search index on mount
@@ -47,11 +44,6 @@ export default function EditorWorkspace() {
         e.preventDefault();
         setActivePanel("search");
       }
-      // Ctrl+Shift+A open agent
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "a") {
-        e.preventDefault();
-        setShowRightPanel((p) => !p);
-      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -75,24 +67,6 @@ export default function EditorWorkspace() {
     document.addEventListener("mouseup", onMouseUp);
   }, [sidebarWidth]);
 
-  // Right panel resize handler
-  const handleRightResize = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startWidth = rightPanelWidth;
-
-    const onMouseMove = (ev: MouseEvent) => {
-      const delta = startX - ev.clientX;
-      setRightPanelWidth(Math.max(300, Math.min(600, startWidth + delta)));
-    };
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  }, [rightPanelWidth]);
-
   if (!ready) {
     return (
       <div className="workspace-loading">
@@ -111,11 +85,6 @@ export default function EditorWorkspace() {
         <div className="workspace-sidebar" style={{ width: sidebarWidth }}>
           {activePanel === "files" && <FileTree />}
           {activePanel === "search" && <SearchPanel />}
-          {activePanel === "agent" && (
-            <div className="sidebar-agent-mini">
-              <AgentPanel />
-            </div>
-          )}
         </div>
 
         {/* Resize handle */}
@@ -125,18 +94,6 @@ export default function EditorWorkspace() {
         <div className="workspace-editor">
           <CodeEditor />
         </div>
-
-        {/* Right panel resize handle */}
-        {showRightPanel && (
-          <div className="workspace-resize-handle" onMouseDown={handleRightResize} />
-        )}
-
-        {/* Right panel (Agent) */}
-        {showRightPanel && activePanel !== "agent" && (
-          <div className="workspace-right-panel" style={{ width: rightPanelWidth }}>
-            <AgentPanel />
-          </div>
-        )}
       </div>
 
       {/* Status bar */}
@@ -151,8 +108,6 @@ export default function EditorWorkspace() {
         </div>
         <div className="statusbar-right">
           <span>Ctrl+Shift+F Search</span>
-          <span className="statusbar-sep">·</span>
-          <span>Ctrl+Shift+A Agent</span>
           <span className="statusbar-sep">·</span>
           <span>Ctrl+S Save</span>
         </div>

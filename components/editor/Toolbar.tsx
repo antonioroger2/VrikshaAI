@@ -11,8 +11,8 @@ import TreeLogo from "@/components/TreeLogo";
 import { createVoiceInputController } from "@/lib/voice-input";
 
 interface ToolbarProps {
-  activePanel: "files" | "search" | "agent";
-  setActivePanel: (panel: "files" | "search" | "agent") => void;
+  activePanel: "files" | "search";
+  setActivePanel: (panel: "files" | "search") => void;
 }
 
 export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
@@ -160,13 +160,6 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
             title="Search"
           >
             🔍 Search
-          </button>
-          <button
-            className={`toolbar-nav-btn ${activePanel === "agent" ? "active" : ""}`}
-            onClick={() => setActivePanel("agent")}
-            title="Agent Panel"
-          >
-            🤖 Agent
           </button>
         </div>
       </div>

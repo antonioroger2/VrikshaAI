@@ -1,0 +1,1206 @@
+/* ── VRIKSHA.ai VOICE WORKSPACE STYLES ──────────────────────────────────────── */
+/* 55/45 Code Editor ↔ Socratic Chat split + Animations                         */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Main Layout: 55% Editor / 45% Agent UI ───────────────────────────────── */
+
+.voice-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--soil);
+  position: relative;
+}
+
+.voice-workspace-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.voice-workspace-left {
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+}
+
+.voice-workspace-right {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 35vw;
+  border-left: 1px solid rgba(168, 224, 99, 0.1);
+  position: relative;
+}
+
+.voice-workspace-right .workspace {
+  height: 100%;
+}
+
+.voice-workspace-divider {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.voice-workspace-divider:hover,
+.voice-workspace-divider:active {
+  background: rgba(76, 175, 80, 0.35);
+}
+
+/* ── Socratic Chat Panel (inside left 70%) ────────────────────────────────── */
+
+.vw-chat-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: rgba(13, 20, 10, 0.6);
+}
+
+.vw-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.2rem;
+  border-bottom: 1px solid rgba(168, 224, 99, 0.1);
+  background: rgba(15, 10, 3, 0.95);
+  flex-shrink: 0;
+}
+
+.vw-chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vw-chat-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.vw-accent { color: var(--saffron); }
+
+.vw-running-badge {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--sprout);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  animation: pulse 1.5s infinite;
+}
+
+.vw-chat-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ── Auto-TTS Toggle ──────────────────────────────────────────────────────── */
+
+.vw-autoplay-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.vw-autoplay-toggle input { display: none; }
+
+.vw-toggle-slider {
+  width: 32px;
+  height: 16px;
+  border-radius: 10px;
+  background: rgba(168, 224, 99, 0.12);
+  border: 1px solid rgba(168, 224, 99, 0.2);
+  position: relative;
+  transition: all 0.3s;
+}
+
+.vw-toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ash);
+  top: 1px;
+  left: 1px;
+  transition: all 0.3s;
+}
+
+.vw-autoplay-toggle input:checked + .vw-toggle-slider {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: var(--sprout);
+}
+
+.vw-autoplay-toggle input:checked + .vw-toggle-slider::after {
+  transform: translateX(16px);
+  background: var(--lime);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+.vw-toggle-label {
+  font-size: 0.62rem;
+  color: var(--ash);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Language chooser for TTS ─────────────────────────────────────────────── */
+
+.vw-tts-language-chooser {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.vw-tts-lang-label {
+  font-size: 0.6rem;
+  color: var(--ash);
+}
+
+.vw-tts-lang-select {
+  background: rgba(168, 224, 99, 0.06);
+  border: 1px solid rgba(168, 224, 99, 0.15);
+  border-radius: 6px;
+  padding: 0.2rem 0.4rem;
+  color: var(--cream);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.vw-tts-lang-select:hover {
+  border-color: rgba(168, 224, 99, 0.3);
+}
+
+.vw-tts-lang-select:focus {
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.vw-tts-lang-select option {
+  background: var(--bark);
+  color: var(--cream);
+}
+
+/* ── Language badge row ───────────────────────────────────────────────────── */
+
+.vw-lang-row {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 1.2rem;
+  border-bottom: 1px solid rgba(168, 224, 99, 0.05);
+  flex-shrink: 0;
+}
+
+.vw-lang-badge {
+  font-size: 0.62rem;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  color: var(--saffron);
+}
+
+/* ── Icon / Stop buttons ──────────────────────────────────────────────────── */
+
+.vw-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(168, 224, 99, 0.15);
+  background: rgba(168, 224, 99, 0.04);
+  color: var(--ash);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.vw-icon-btn:hover {
+  background: rgba(168, 224, 99, 0.1);
+  color: var(--cream);
+}
+
+.vw-stop-btn {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(192, 83, 58, 0.15);
+  border: 1px solid rgba(192, 83, 58, 0.3);
+  color: var(--terracotta);
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+
+.vw-stop-btn:hover {
+  background: rgba(192, 83, 58, 0.25);
+}
+
+.vw-clear-btn {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(168, 224, 99, 0.18);
+  background: rgba(168, 224, 99, 0.06);
+  color: var(--ash);
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+
+.vw-clear-btn:hover:not(:disabled) {
+  background: rgba(168, 224, 99, 0.14);
+  color: var(--cream);
+}
+
+.vw-clear-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Messages Area ────────────────────────────────────────────────────────── */
+
+.vw-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bark) transparent;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+
+.vw-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  gap: 0.8rem;
+  padding: 2rem;
+}
+
+.vw-empty-icon { font-size: 3rem; opacity: 0.6; }
+
+.vw-empty-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--lime);
+}
+
+.vw-empty-sub {
+  font-size: 0.78rem;
+  color: var(--ash);
+  max-width: 420px;
+  line-height: 1.7;
+}
+
+.vw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.vw-chip {
+  font-size: 0.65rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 16px;
+  background: rgba(168, 224, 99, 0.06);
+  border: 1px solid rgba(168, 224, 99, 0.12);
+  color: var(--ash);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+
+.vw-chip:hover {
+  background: rgba(168, 224, 99, 0.14);
+  color: var(--lime);
+  border-color: rgba(168, 224, 99, 0.3);
+}
+
+/* ── Chat Bubbles ─────────────────────────────────────────────────────────── */
+
+.vw-bubble {
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  max-width: 75%;
+  background: rgba(30, 58, 31, 0.3);
+  border: 1px solid rgba(76, 175, 80, 0.12);
+  backdrop-filter: blur(6px);
+  position: relative;
+}
+
+.vw-bubble--user {
+  align-self: flex-end;
+  background: rgba(245, 166, 35, 0.08);
+  border-color: rgba(245, 166, 35, 0.18);
+  border-bottom-right-radius: 4px;
+}
+
+.vw-bubble--agent {
+  align-self: flex-start;
+  background: rgba(30, 58, 31, 0.35);
+  border-color: rgba(76, 175, 80, 0.15);
+  border-bottom-left-radius: 4px;
+}
+
+.vw-bubble--system {
+  align-self: center;
+  background: rgba(138, 157, 139, 0.06);
+  border-color: rgba(138, 157, 139, 0.12);
+  max-width: 85%;
+  font-style: italic;
+}
+
+.vw-bubble-role {
+  font-size: 0.6rem;
+  color: var(--ash);
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.vw-bubble-text {
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--cream);
+}
+
+.vw-inline-code {
+  padding: 1px 5px;
+  background: rgba(168, 224, 99, 0.1);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--lime);
+}
+
+/* ── TTS Play button on bubbles ───────────────────────────────────────────── */
+
+.vw-tts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  color: var(--sprout);
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+
+.vw-tts-btn:hover {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--lime);
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.2);
+}
+
+.vw-tts-btn--active {
+  background: rgba(245, 166, 35, 0.15);
+  border-color: rgba(245, 166, 35, 0.3);
+  color: var(--saffron);
+  animation: orb-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Typing indicator ─────────────────────────────────────────────────────── */
+
+.vw-typing-indicator {
+  display: flex;
+  gap: 5px;
+  padding: 0.6rem 1rem;
+  background: rgba(30, 58, 31, 0.25);
+  border: 1px solid rgba(76, 175, 80, 0.1);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  width: fit-content;
+  align-self: flex-start;
+}
+
+.vw-typing-indicator span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sprout);
+  animation: typingBounce 1.2s infinite;
+}
+
+.vw-typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.vw-typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Waiting for user response state ─────────────────────────────────────── */
+
+.vw-awaiting-response {
+  align-self: center;
+  width: min(92%, 560px);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  background: linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(45, 106, 47, 0.08));
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+}
+
+.vw-awaiting-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--saffron);
+  text-transform: uppercase;
+}
+
+.vw-awaiting-sub {
+  margin-top: 0.35rem;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--ash);
+}
+
+/* ── Input Area ───────────────────────────────────────────────────────────── */
+
+.vw-input-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 1.5rem 1.2rem;
+  border-top: 1px solid rgba(168, 224, 99, 0.08);
+  background: rgba(15, 10, 3, 0.7);
+  gap: 0.7rem;
+  flex-shrink: 0;
+}
+
+/* Large centered mic button */
+.vw-mic-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, rgba(29, 58, 31, 0.8), rgba(45, 106, 47, 0.6));
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2);
+}
+
+.vw-mic-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 30px rgba(76, 175, 80, 0.35);
+  border-color: var(--sprout);
+}
+
+.vw-mic-btn--active {
+  background: linear-gradient(135deg, rgba(192, 83, 58, 0.7), rgba(192, 83, 58, 0.5));
+  border-color: var(--terracotta);
+  animation: recPulse 1s infinite;
+  box-shadow: 0 4px 24px rgba(192, 83, 58, 0.35);
+}
+
+/* Elegant floating input bar */
+.vw-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 700px;
+  background: rgba(168, 224, 99, 0.03);
+  border: 1px solid rgba(168, 224, 99, 0.12);
+  border-radius: 14px;
+  padding: 0.4rem 0.5rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.vw-input-bar:focus-within {
+  border-color: rgba(76, 175, 80, 0.35);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.08);
+}
+
+.vw-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--cream);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  resize: none;
+  min-height: 38px;
+  max-height: 100px;
+  outline: none;
+  line-height: 1.5;
+  padding: 0.35rem 0.5rem;
+}
+
+.vw-textarea::placeholder { color: var(--ash); opacity: 0.5; }
+
+.vw-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--leaf), var(--sprout));
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.vw-send-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3); }
+.vw-send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+/* ── Voice Orb ────────────────────────────────────────────────────────────── */
+
+.vw-orb-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.vw-orb-core {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.vw-orb-core--idle {
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.35), rgba(29, 58, 31, 0.9));
+  border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.vw-orb-core--listening {
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.55), rgba(29, 58, 31, 0.95));
+  border: 2px solid rgba(76, 175, 80, 0.6);
+}
+
+.vw-orb-core--speaking {
+  background: radial-gradient(circle, rgba(245, 166, 35, 0.45), rgba(60, 40, 10, 0.9));
+  border: 2px solid rgba(245, 166, 35, 0.5);
+}
+
+.vw-orb-icon {
+  font-size: 1.8rem;
+}
+
+.vw-orb-label {
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--ash);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  position: absolute;
+  bottom: 0;
+}
+
+/* ── Flashy Code Canvas ───────────────────────────────────────────────────── */
+
+.vw-canvas-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: rgba(10, 10, 10, 0.9);
+}
+
+.vw-canvas-filetree {
+  border-bottom: 1px solid rgba(168, 224, 99, 0.08);
+  max-height: 180px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bark) transparent;
+}
+
+.vw-canvas-filetree-header {
+  font-size: 0.6rem;
+  color: var(--ash);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(168, 224, 99, 0.05);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+}
+
+.vw-canvas-empty-files {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--ash);
+  opacity: 0.5;
+}
+
+.vw-canvas-file {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--cream);
+  transition: background 0.15s;
+  position: relative;
+}
+
+.vw-canvas-file:hover { background: rgba(168, 224, 99, 0.06); }
+
+.vw-canvas-file--active {
+  background: rgba(76, 175, 80, 0.1);
+  border-right: 2px solid var(--sprout);
+}
+
+/* Flash effect on new files */
+.vw-canvas-file--flash {
+  animation: flash-update 2s ease-out;
+}
+
+.vw-canvas-file--flash .vw-canvas-file-name {
+  color: var(--lime);
+  text-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+}
+
+.vw-canvas-file-icon { font-size: 0.75rem; flex-shrink: 0; }
+.vw-canvas-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.vw-new-badge {
+  font-size: 0.5rem;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--lime);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  animation: flash-update 1.5s ease-out;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.vw-writing-badge {
+  font-size: 0.58rem;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--saffron);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  animation: pulse 1s infinite;
+}
+
+.vw-canvas-code-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.vw-canvas-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(168, 224, 99, 0.06);
+  flex-shrink: 0;
+}
+
+.vw-canvas-filename {
+  font-size: 0.68rem;
+  color: var(--lime);
+  font-weight: 600;
+}
+
+.vw-canvas-code {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: var(--lime);
+  white-space: pre;
+  tab-size: 2;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bark) transparent;
+  background: var(--terminal);
+  margin: 0;
+  position: relative;
+}
+
+.vw-canvas-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  padding: 2rem;
+  color: var(--ash);
+  gap: 0.5rem;
+}
+
+.vw-canvas-placeholder-icon { font-size: 2.5rem; opacity: 0.4; }
+
+.vw-canvas-placeholder p {
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.vw-canvas-placeholder-sub {
+  font-size: 0.68rem;
+  opacity: 0.5;
+}
+
+/* ── Cursor blink ──────────────────────────────────────────────────────────── */
+
+.vw-cursor-blink {
+  animation: blink-cursor 0.8s step-end infinite;
+  color: var(--lime);
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Local-Link Terminal ──────────────────────────────────────────────────── */
+
+.vw-terminal-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
+.vw-terminal-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.4rem 1.2rem;
+  background: rgba(15, 10, 3, 0.95);
+  border: none;
+  border-top: 1px solid rgba(168, 224, 99, 0.12);
+  color: var(--ash);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.vw-terminal-toggle:hover {
+  background: rgba(20, 15, 5, 0.98);
+  color: var(--cream);
+}
+
+.vw-terminal-toggle-arrow {
+  font-size: 0.6rem;
+  transition: transform 0.3s;
+}
+
+.vw-bash-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(168, 224, 99, 0.2);
+  margin-left: auto;
+  transition: all 0.3s;
+}
+
+.vw-bash-dot--connected {
+  background: var(--sprout);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+.vw-terminal-drawer {
+  background: rgba(5, 5, 5, 0.97);
+  border-top: 1px solid rgba(168, 224, 99, 0.1);
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+}
+
+.vw-terminal-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  background: rgba(20, 15, 5, 0.8);
+  border-bottom: 1px solid rgba(168, 224, 99, 0.06);
+  gap: 0.75rem;
+}
+
+.vw-traffic-lights {
+  display: flex;
+  gap: 5px;
+}
+
+.vw-traffic-lights span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.vw-terminal-title {
+  font-size: 0.65rem;
+  color: var(--ash);
+  flex: 1;
+}
+
+.vw-terminal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Bash connect toggle (smaller version) */
+.vw-bash-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.vw-bash-toggle-label input { display: none; }
+
+.vw-toggle-label-sm {
+  font-size: 0.58rem;
+  color: var(--ash);
+}
+
+/* Deploy button */
+.vw-deploy-btn {
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--leaf), var(--sprout));
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  color: white;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 2px 12px rgba(76, 175, 80, 0.2);
+}
+
+.vw-deploy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.35);
+}
+
+.vw-deploy-btn--deploying {
+  cursor: wait;
+}
+
+.vw-deploy-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+/* Terminal body */
+.vw-terminal-body {
+  padding: 0.5rem 0.8rem;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  max-height: 240px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bark) transparent;
+}
+
+.vw-terminal-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.vw-terminal-line--output { color: var(--cream); }
+.vw-terminal-line--input  { color: var(--lime); }
+.vw-terminal-line--system { color: var(--saffron); font-style: italic; }
+.vw-terminal-line--error  { color: var(--terracotta); }
+
+.vw-terminal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.vw-terminal-prompt {
+  color: var(--lime);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.vw-terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--cream);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  outline: none;
+}
+
+.vw-terminal-input::placeholder {
+  color: var(--ash);
+  opacity: 0.4;
+}
+
+/* Toast */
+.vw-toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.6rem 1.2rem;
+  background: rgba(30, 20, 8, 0.95);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: 10px;
+  color: var(--saffron);
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  max-width: 500px;
+  text-align: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  CUSTOM CSS KEYFRAME ANIMATIONS                                           */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── flash-update: Bright green glow that fades (new/updated files) ───────── */
+
+@keyframes flash-update {
+  0% {
+    background: rgba(76, 175, 80, 0.35);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.6), inset 0 0 12px rgba(76, 175, 80, 0.25);
+  }
+  25% {
+    background: rgba(76, 175, 80, 0.2);
+    box-shadow: 0 0 14px rgba(76, 175, 80, 0.4), inset 0 0 8px rgba(76, 175, 80, 0.15);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* ── typing-glow: Neon pulsing glow while code is being typed ─────────────── */
+
+.typing-glow {
+  animation: typing-glow 1.2s ease-in-out infinite alternate;
+  position: relative;
+}
+
+@keyframes typing-glow {
+  0% {
+    box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.08), 0 0 8px rgba(76, 175, 80, 0.15);
+    border-left: 2px solid rgba(76, 175, 80, 0.3);
+  }
+  100% {
+    box-shadow: inset 0 0 40px rgba(76, 175, 80, 0.15), 0 0 18px rgba(76, 175, 80, 0.3);
+    border-left: 2px solid rgba(76, 175, 80, 0.7);
+  }
+}
+
+/* ── orb-pulse: Voice orb breathing animation ─────────────────────────────── */
+
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 40px rgba(76, 175, 80, 0.5);
+  }
+}
+
+/* ── neon-on: Flash brightly like neon light powering on ──────────────────── */
+
+@keyframes neon-on {
+  0% {
+    opacity: 0;
+    text-shadow: 0 0 0 transparent;
+  }
+  10% {
+    opacity: 1;
+    text-shadow: 0 0 30px rgba(76, 175, 80, 0.9), 0 0 60px rgba(76, 175, 80, 0.5);
+  }
+  20% {
+    opacity: 0.4;
+    text-shadow: none;
+  }
+  30% {
+    opacity: 1;
+    text-shadow: 0 0 20px rgba(76, 175, 80, 0.7), 0 0 40px rgba(76, 175, 80, 0.35);
+  }
+  40% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    opacity: 1;
+    text-shadow: none;
+  }
+}
+
+.neon-flash-in code {
+  animation: neon-on 0.8s ease-out forwards;
+}
+
+/* ── file-slide-in: File name slides down with glowing trail ──────────────── */
+
+@keyframes file-slide-in {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+    text-shadow: 0 -10px 20px rgba(76, 175, 80, 0.8);
+  }
+  40% {
+    opacity: 1;
+    text-shadow: 0 -5px 15px rgba(76, 175, 80, 0.5);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    text-shadow: none;
+  }
+}
+
+/* ── zip-spin: Zipping animation for deploy ───────────────────────────────── */
+
+@keyframes zip-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(0.9); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  75% { transform: rotate(270deg) scale(0.95); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.vw-deploy-btn--deploying::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: zip-spin 0.8s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ── Changed line highlight (in-editor flash for modified lines) ──────────── */
+
+.vw-line-changed {
+  animation: flash-update 2s ease-out forwards;
+  border-left: 2px solid var(--lime);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  RESPONSIVE                                                                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1000px) {
+  .voice-workspace-body {
+    flex-direction: column;
+  }
+
+  .voice-workspace-left {
+    flex: 1;
+  }
+
+  .voice-workspace-right {
+    min-width: 0;
+    flex: none;
+    height: 35vh;
+    border-left: none;
+    border-top: 1px solid rgba(168, 224, 99, 0.1);
+  }
+
+  .voice-workspace-divider {
+    width: 100%;
+    height: 4px;
+    cursor: row-resize;
+  }
+}
+
+@media (max-width: 700px) {
+  .voice-workspace-right {
+    display: none;
+  }
+
+  .vw-bubble {
+    max-width: 92%;
+  }
+
+  .vw-orb-container {
+    width: 140px;
+    height: 140px;
+  }
+
+  .vw-orb-core {
+    width: 65px;
+    height: 65px;
+  }
+}
