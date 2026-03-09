@@ -6,6 +6,7 @@ import PipelineSidebar from './PipelineSidebar';
 import ChatPanel from './ChatPanel';
 import CodeOutputPanel from './CodeOutputPanel';
 import { AI_RESPONSES, PIPELINE_NODES } from '../lib/data';
+import { translate } from '../lib/translation-service';
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function VrikshaApp() {
@@ -45,14 +46,25 @@ export default function VrikshaApp() {
     });
   }, []);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setShowWelcome(false);
     setIsTyping(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsTyping(false);
-      const greeting = lang === "hi" ? AI_RESPONSES.greeting.hi
-        : lang === "ta" ? AI_RESPONSES.greeting.ta
-        : AI_RESPONSES.greeting.en;
+      let greeting = AI_RESPONSES.greeting.en;
+      if (lang !== 'en') {
+        try {
+          const translation = await translate({
+            text: greeting,
+            sourceLang: 'en',
+            targetLang: lang as any
+          });
+          greeting = translation.translatedText;
+        } catch (error) {
+          console.error('Translation error:', error);
+          // Fall back to English
+        }
+      }
       addMessage("ai", greeting);
       advancePipeline(2);
     }, 1200);
@@ -82,11 +94,25 @@ export default function VrikshaApp() {
       setStats(s => ({ ...s, files: 4, lines: 87 }));
     }
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsTyping(false);
-      addMessage("ai", response);
+      let finalResponse = response;
+      if (lang !== 'en') {
+        try {
+          const translation = await translate({
+            text: response,
+            sourceLang: 'en',
+            targetLang: lang as any
+          });
+          finalResponse = translation.translatedText;
+        } catch (error) {
+          console.error('Translation error:', error);
+          // Fall back to original response
+        }
+      }
+      addMessage("ai", finalResponse);
       advancePipeline(nextNode);
-      setStats(s => ({ ...s, tokens: s.tokens + Math.floor(response.length / 4) }));
+      setStats(s => ({ ...s, tokens: s.tokens + Math.floor(finalResponse.length / 4) }));
     }, delay);
   };
 

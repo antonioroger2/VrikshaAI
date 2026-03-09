@@ -206,27 +206,75 @@ export async function translateWithGroq(
   }
 }
 
+/**
+ * Translate using Google Gemini as fallback
+ */
+export async function translateWithGemini(
+  request: TranslationRequest
+): Promise<TranslationResponse> {
+  const { text, sourceLang, targetLang } = request;
+
+  if (sourceLang === targetLang) {
+    return { translatedText: text, sourceLang, targetLang, confidence: 1.0 };
+  }
+
+  const apiKey = API_CONFIG.gemini.apiKey;
+  if (!apiKey) {
+    return fallbackTranslation(request);
+  }
+
+  const sourceLanguageName = SUPPORTED_LANGUAGES[sourceLang].name;
+  const targetLanguageName = SUPPORTED_LANGUAGES[targetLang].name;
+
+  try {
+    const response = await fetch(`${API_CONFIG.gemini.baseUrl}/v1beta/models/${API_CONFIG.gemini.model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `Translate the following text from ${sourceLanguageName} to ${targetLanguageName}. Maintain technical terms in English when appropriate. Output only the translated text, no explanations: ${text}`,
+          }],
+        }],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text;
+
+    return {
+      translatedText,
+      sourceLang,
+      targetLang,
+    };
+  } catch (error) {
+    console.error('Gemini translation error:', error);
+    return fallbackTranslation(request);
+  }
+}
+
 // ── Main Translation Function ────────────────────────────────────────────────
 
 /**
- * Main translation function - tries AI4Bharat first, then Sarvam, then Groq
+ * Main translation function - tries Groq first, then Gemini, then fallback
  */
 export async function translate(
   request: TranslationRequest
 ): Promise<TranslationResponse> {
-  // Try AI4Bharat first (best for Indic languages)
-  // if (API_CONFIG.ai4bharat.apiKey) {
-  //   return translateWithAI4Bharat(request);
-  // }
-
-  // Try Sarvam as second option
-  // if (API_CONFIG.sarvam.apiKey) {
-  //   return translateWithSarvam(request);
-  // }
-
-  // Try Groq Llama as fallback
+  // Try Groq Llama as primary
   if (API_CONFIG.groq.apiKey) {
     return translateWithGroq(request);
+  }
+
+  // Try Gemini as fallback
+  if (API_CONFIG.gemini.apiKey) {
+    return translateWithGemini(request);
   }
 
   // Last resort fallback

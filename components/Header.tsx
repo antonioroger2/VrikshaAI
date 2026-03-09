@@ -17,9 +17,19 @@ const Header = ({ lang, setLang }: HeaderProps) => {
       </div>
 
       <div className="lang-selector">
-        {["en", "hi", "ta", "te"].map(l => (
+        {["en", "hi", "ta", "te", "ml", "bn", "mr", "gu", "kn", "pa", "or"].map(l => (
           <button key={l} className={`lang-btn ${lang === l ? "active" : ""}`} onClick={() => setLang(l)}>
-            {l === "en" ? "EN" : l === "hi" ? "हिं" : l === "ta" ? "தமி" : "తె"}
+            {l === "en" ? "EN" : 
+             l === "hi" ? "हिं" : 
+             l === "ta" ? "தமி" : 
+             l === "te" ? "తె" :
+             l === "ml" ? "മല" :
+             l === "bn" ? "বাং" :
+             l === "mr" ? "मर" :
+             l === "gu" ? "ગુ" :
+             l === "kn" ? "ಕನ" :
+             l === "pa" ? "ਪੰ" :
+             l === "or" ? "ଓଡ" : l.toUpperCase()}
           </button>
         ))}
       </div>

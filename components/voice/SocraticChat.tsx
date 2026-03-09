@@ -17,6 +17,7 @@ import { ArrowUp, Bot, Languages, Mic, Square, Trash2, Volume2 } from "lucide-re
 import { useAgentStore, type AgentMessage } from "@/store/agent-store";
 import { useRepoStore } from "@/store/repo-store";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/lib/api-config";
+import { translateChatMessage } from "@/lib/translation-service";
 import {
   startRecording,
   isVoiceInputSupported,
@@ -118,6 +119,8 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
   const [handle, setHandle] = useState<RecordingHandle | null>(null);
   const [transcribing, setTranscribing] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
+  const [translating, setTranslating] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const seenIds = useRef<Set<string>>(new Set());
 
@@ -126,10 +129,47 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
     setTtsLanguage(inputLanguage);
   }, [inputLanguage]);
 
-  // Auto-scroll
+  // Translate agent messages to input language
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (inputLanguage === 'en') {
+      setTranslatedMessages({});
+      return;
+    }
+
+    const translateMessages = async () => {
+      const newTranslations: Record<string, string> = {};
+      const toTranslate: AgentMessage[] = [];
+
+      for (const msg of messages) {
+        if (msg.role === 'agent' && !translatedMessages[msg.id] && !translating.has(msg.id)) {
+          toTranslate.push(msg);
+        }
+      }
+
+      if (toTranslate.length === 0) return;
+
+      setTranslating(prev => new Set([...prev, ...toTranslate.map(m => m.id)]));
+
+      for (const msg of toTranslate) {
+        try {
+          const translated = await translateChatMessage(msg.text, 'en', inputLanguage);
+          newTranslations[msg.id] = translated;
+        } catch (error) {
+          console.error('Translation error:', error);
+          newTranslations[msg.id] = msg.text; // Fallback to original
+        }
+      }
+
+      setTranslatedMessages(prev => ({ ...prev, ...newTranslations }));
+      setTranslating(prev => {
+        const newSet = new Set(prev);
+        toTranslate.forEach(m => newSet.delete(m.id));
+        return newSet;
+      });
+    };
+
+    translateMessages();
+  }, [messages, inputLanguage, translating]);
 
   // Auto-TTS — fires whenever a new agent message arrives and autoPlay is on
   useEffect(() => {
@@ -334,12 +374,12 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
                 {msg.role === "user" ? "You" : msg.role === "agent" ? "VRIKSHA" : "System"}
               </p>
               <div className="vw-bubble-text">
-                <RichText text={msg.text} />
+                <RichText text={msg.role === 'agent' && inputLanguage !== 'en' ? (translatedMessages[msg.id] || msg.text) : msg.text} />
               </div>
               {msg.role === "agent" && (
                 <button
                   className={`vw-tts-btn ${playingId === msg.id ? "vw-tts-btn--active" : ""}`}
-                  onClick={() => playSpeech(msg.text, msg.id)}
+                  onClick={() => playSpeech(msg.role === 'agent' && inputLanguage !== 'en' ? (translatedMessages[msg.id] || msg.text) : msg.text, msg.id)}
                   title="Play audio"
                 >
                   {playingId === msg.id ? <Square size={13} /> : <Volume2 size={13} />}

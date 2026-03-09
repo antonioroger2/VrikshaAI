@@ -101,7 +101,7 @@ async function callGemini(
       max_new_tokens: 4096,
       temperature: 0.7,
       do_sample: true,
-    });
+    }) as { generated_text: string }[];
 
     return output[0].generated_text.replace(prompt, '').trim();
   } catch (error) {

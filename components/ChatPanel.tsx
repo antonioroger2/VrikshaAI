@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { HINT_CHIPS } from '../lib/data';
 import { Play, Bot, User, Square, Mic, Send } from 'lucide-react';
+import { translate } from '../lib/translation-service';
 
 interface Message {
   role: 'ai' | 'user';
@@ -38,6 +39,47 @@ const ChatPanel = ({
   handleChip
 }: ChatPanelProps) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [translatedChips, setTranslatedChips] = useState<string[]>(HINT_CHIPS);
+
+  // Translate hint chips
+  useEffect(() => {
+    if (lang === 'en') {
+      setTranslatedChips(HINT_CHIPS);
+      return;
+    }
+
+    const translateChips = async () => {
+      try {
+        const translations = await Promise.all(
+          HINT_CHIPS.map(chip => translate({ text: chip, sourceLang: 'en', targetLang: lang as any }))
+        );
+        setTranslatedChips(translations.map(t => t.translatedText));
+      } catch (error) {
+        console.error('Chip translation error:', error);
+        setTranslatedChips(HINT_CHIPS); // Fallback
+      }
+    };
+
+    translateChips();
+  }, [lang]);
+
+  // Get localized title for "Bharath Builder"
+  const getLocalizedTitle = (language: string) => {
+    const titles: Record<string, string> = {
+      en: "Bharath Builder",
+      hi: "भारत बिल्डर",
+      ta: "பாரத் பில்டர்",
+      te: "భారత్ బిల్డర్",
+      ml: "ഭാരത് ബിൽഡർ",
+      bn: "ভারত বিল্ডার",
+      mr: "भारत बिल्डर",
+      gu: "ભારત બિલ્ડર",
+      kn: "ಭಾರತ್ ಬಿಲ್ಡರ್",
+      pa: "ਭਾਰਤ ਬਿਲਡਰ",
+      or: "ଭାରତ ବିଲ୍ଡର୍"
+    };
+    return titles[language] || "Bharath Builder";
+  };
 
   return (
     <div className="chat-panel" style={{ position: "relative" }}>
@@ -68,7 +110,7 @@ const ChatPanel = ({
       )}
 
       <div className="panel-header" style={{ background: "rgba(13,20,10,0.9)" }}>
-        <span className="panel-title">Voice-First<span className="accent">Bharath Builder</span></span>
+        <span className="panel-title">Voice-First<span className="accent">{getLocalizedTitle(lang)}</span></span>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {recording && (
             <div className="waveform">
@@ -154,8 +196,8 @@ const ChatPanel = ({
           </button>
         </div>
         <div className="input-hints">
-          {HINT_CHIPS.map(c => (
-            <span key={c} className="hint-chip" onClick={() => handleChip(c)}>{c}</span>
+          {translatedChips.map((c, i) => (
+            <span key={i} className="hint-chip" onClick={() => handleChip(HINT_CHIPS[i])}>{c}</span>
           ))}
         </div>
       </div>

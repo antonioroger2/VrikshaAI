@@ -245,12 +245,12 @@ export async function transcribeAudio(
   }
 
   try {
-    return await transcribeWithGroq(audioBlob, preferredLanguage, API_CONFIG.groqAsr.model);
+    return await transcribeWithGroq(audioBlob, API_CONFIG.groqAsr.model, preferredLanguage);
   } catch (err) {
     console.warn('[voice-input] Groq ASR failed, trying turbo fallback:', err);
     // Check if it's rate limit, but since we check headers, perhaps fallback always or check error
     try {
-      return await transcribeWithGroq(audioBlob, preferredLanguage, API_CONFIG.groqAsr.fallbackModel);
+      return await transcribeWithGroq(audioBlob, API_CONFIG.groqAsr.fallbackModel, preferredLanguage);
     } catch (fallbackErr) {
       console.warn('[voice-input] Turbo ASR also failed:', fallbackErr);
       throw new Error('ASR providers failed. Please try again.');
@@ -278,8 +278,8 @@ export async function transcribeAudio(
  */
 async function transcribeWithGroq(
   audioBlob: Blob,
-  preferredLanguage?: SupportedLanguage,
   model: string,
+  preferredLanguage?: SupportedLanguage,
 ): Promise<TranscriptionResult> {
   const apiKey = API_CONFIG.groqAsr.apiKey;
   const baseUrl = API_CONFIG.groqAsr.baseUrl;

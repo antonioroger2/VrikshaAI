@@ -130,11 +130,20 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     set({ inputLanguage: lang });
   },
 
-  addMessage: (role, text) => {
+  addMessage: async (role, text) => {
+    let finalText = text;
+    if (role === 'agent' && get().inputLanguage !== 'en') {
+      try {
+        finalText = await translateChatMessage(text, 'en', get().inputLanguage);
+      } catch (error) {
+        console.error('Translation error for agent message:', error);
+        // Fall back to original text
+      }
+    }
     const msg: AgentMessage = {
       id: uid(),
       role,
-      text,
+      text: finalText,
       timestamp: Date.now(),
       node: get().currentNode,
     };
@@ -242,7 +251,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         const recentMessages = currentState.messages.slice(-10); // Get recent conversation
         const contextSummary = recentMessages
           .filter(m => m.role !== 'system')
-          .map(m => `${m.role}: ${m.content}`)
+          .map(m => `${m.role}: ${m.text}`)
           .join('\n');
         translatedGoal = `${contextSummary}\n\nLatest user input: ${translatedGoal}`;
         addMsg("agent", `🧠 **Continuing Planning:** Incorporating your answers…`);
@@ -308,7 +317,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
             addMsg("agent", planResult.response || "I need some clarification before I can create a plan:");
             planResult.clarifyingQuestions.forEach((q: string) => addMsg("agent", `• ${q}`));
             // Update status to indicate planning is complete and waiting for clarification
-            set({ currentNode: 'responding', isProcessing: false, running: false });
+            set({ currentNode: 'responding', running: false });
             return; // Exit early, don't continue with plan execution
           } else {
             console.error('🔍 LLM Response (no plan found):', planResult?.response);
