@@ -1,0 +1,18 @@
+# Files to exclude from Render deployment
+.next/
+node_modules/
+.env.local
+.env.example
+.git/
+.gitignore
+README.md
+DEPLOYMENT.md
+render.yaml
+*.log
+.DS_Store
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo

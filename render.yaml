@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: vriksha-web
+    runtime: node
+    nodeVersion: "18"  # Required for Next.js 16
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Add your environment variables here
+      # These should match your .env file variables
+      - key: NEXT_PUBLIC_GROQ_API_KEY
+        sync: false  # Set to true if you want to sync from Render dashboard
+      - key: NEXT_PUBLIC_GROQ_BASE_URL
+        value: https://api.groq.com
+      - key: NEXT_PUBLIC_GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: NEXT_PUBLIC_GROQ_ASR_MODEL
+        value: whisper-large-v3
+      - key: NEXT_PUBLIC_GROQ_ASR_FALLBACK_MODEL
+        value: whisper-large-v3-turbo
+      - key: NEXT_PUBLIC_QWEN_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_QWEN_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: NEXT_PUBLIC_QWEN_MODEL
+        value: qwen/qwen3-coder:free
+      - key: NEXT_PUBLIC_GEMINI_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_GEMINI_BASE_URL
+        value: https://generativelanguage.googleapis.com
+      - key: NEXT_PUBLIC_GEMINI_MODEL
+        value: gemma-2-9b-it
+      - key: NEXT_PUBLIC_NOMIC_BASE_URL
+        value: https://api.nomic.ai
+      - key: NEXT_PUBLIC_NOMIC_MODEL
+        value: nomic-embed-text-v1
+      - key: AWS_S3_BUCKET
+        value: vriksha-assets
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: ACCESS_KEY_ID
+        sync: false
+      - key: SECRET_ACCESS_KEY
+        sync: false
