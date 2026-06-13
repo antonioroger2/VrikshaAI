@@ -70,9 +70,18 @@ export async function withSmartRetries<T>(
         msg.includes('429') ||
         (error as { status?: number })?.status === 429;
 
-      const waitTime = isRateLimit ? 10_000 : Math.pow(2, attempt) * 1_000;
+      let waitTime = isRateLimit ? 10_000 : Math.pow(2, attempt) * 1_000;
+      
+      // Parse precise wait time from Groq error message if present
+      if (isRateLimit) {
+        const match = msg.match(/try again in (\d+(?:\.\d+)?)s/);
+        if (match && match[1]) {
+          waitTime = (parseFloat(match[1]) * 1000) + 1500; // Add 1.5s buffer
+        }
+      }
+
       onStatus?.(
-        `⚠️ API error. Retrying in ${waitTime / 1000}s (Attempt ${attempt + 1}/${maxRetries})…`
+        `⚠️ Rate limit. Retrying in ${(waitTime / 1000).toFixed(1)}s (Attempt ${attempt + 1}/${maxRetries})…`
       );
       console.warn(`[${provider}] attempt ${attempt} failed, waiting ${waitTime}ms…`, error);
 

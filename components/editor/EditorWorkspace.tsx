@@ -20,6 +20,7 @@ export default function EditorWorkspace() {
   const [activePanel, setActivePanel] = useState<"files" | "search">("files");
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [ready, setReady] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Initialize repo + search index on mount
   useEffect(() => {
@@ -37,12 +38,13 @@ export default function EditorWorkspace() {
       // Ctrl+B toggle sidebar
       if ((e.metaKey || e.ctrlKey) && e.key === "b") {
         e.preventDefault();
-        setActivePanel((prev) => (prev === "files" ? "files" : "files")); // Just ensure sidebar visible
+        setIsMobileSidebarOpen(prev => !prev);
       }
       // Ctrl+Shift+F open search
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "f") {
         e.preventDefault();
         setActivePanel("search");
+        setIsMobileSidebarOpen(true);
       }
     };
     window.addEventListener("keydown", handler);
@@ -77,10 +79,23 @@ export default function EditorWorkspace() {
   }
 
   return (
-    <div className="workspace">
-      <Toolbar activePanel={activePanel} setActivePanel={setActivePanel} />
+    <div className={`workspace ${isMobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
+      <Toolbar 
+        activePanel={activePanel} 
+        setActivePanel={(panel) => {
+          setActivePanel(panel);
+          setIsMobileSidebarOpen(true);
+        }} 
+        toggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+      />
 
       <div className="workspace-body">
+        {/* Mobile sidebar overlay */}
+        <div 
+          className="workspace-sidebar-overlay" 
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+
         {/* Left sidebar */}
         <div className="workspace-sidebar" style={{ width: sidebarWidth }}>
           {activePanel === "files" && <FileTree />}
@@ -104,12 +119,12 @@ export default function EditorWorkspace() {
           <span className="statusbar-sep">·</span>
           <span>Local-first</span>
           <span className="statusbar-sep">·</span>
-          <span>IndexedDB</span>
+          <span className="mobile-hide">IndexedDB</span>
         </div>
         <div className="statusbar-right">
-          <span>Ctrl+Shift+F Search</span>
-          <span className="statusbar-sep">·</span>
-          <span>Ctrl+S Save</span>
+          <span className="mobile-hide">Ctrl+Shift+F Search</span>
+          <span className="statusbar-sep mobile-hide">·</span>
+          <span className="mobile-hide">Ctrl+S Save</span>
         </div>
       </div>
     </div>

@@ -1370,12 +1370,57 @@
   }
 }
 
-@media (max-width: 700px) {
-  .workspace-sidebar {
+@media (max-width: 1024px) {
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .workspace-sidebar-overlay {
     display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 40;
+  }
+
+  .workspace.mobile-sidebar-open .workspace-sidebar-overlay {
+    display: block;
+  }
+
+  .workspace-sidebar {
+    position: fixed;
+    top: 44px; /* Below toolbar */
+    bottom: 24px; /* Above statusbar */
+    left: -100%;
+    z-index: 50;
+    width: 260px !important;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+
+  .workspace.mobile-sidebar-open .workspace-sidebar {
+    left: 0;
   }
 
   .toolbar-nav {
     display: none;
+  }
+
+  .workspace-resize-handle {
+    display: none;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  .workspace-sidebar-overlay {
+    display: none !important;
   }
 }

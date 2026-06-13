@@ -16,6 +16,7 @@ import {
   Square,
   Trash2,
   Upload,
+  Menu,
 } from "lucide-react";
 import { useRepoStore } from "@/store/repo-store";
 import { buildSearchIndex } from "@/lib/search-engine";
@@ -25,9 +26,10 @@ import { createVoiceInputController } from "@/lib/voice-input";
 interface ToolbarProps {
   activePanel: "files" | "search";
   setActivePanel: (panel: "files" | "search") => void;
+  toggleMobileSidebar?: () => void;
 }
 
-export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
+export default function Toolbar({ activePanel, setActivePanel, toggleMobileSidebar }: ToolbarProps) {
   const { files, importFiles, clearAll, loadRepo, createFile } = useRepoStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -154,9 +156,18 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
   return (
     <header className="toolbar">
       <div className="toolbar-left">
+        {toggleMobileSidebar && (
+          <button 
+            className="toolbar-btn mobile-menu-btn" 
+            onClick={toggleMobileSidebar}
+            title="Toggle Sidebar"
+          >
+            <Menu size={16} />
+          </button>
+        )}
         <div className="toolbar-logo">
           <TreeLogo />
-          <div>
+          <div className="mobile-hide">
             <div className="toolbar-logo-name">VRIKSHA<span>.ai</span></div>
             <div className="toolbar-logo-sub">Local Editor</div>
           </div>
@@ -169,7 +180,7 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
             title="File Explorer"
           >
             <FolderOpen size={14} />
-            <span>Files</span>
+            <span className="mobile-hide">Files</span>
           </button>
           <button
             className={`toolbar-nav-btn ${activePanel === "search" ? "active" : ""}`}
@@ -177,39 +188,39 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
             title="Search"
           >
             <Search size={14} />
-            <span>Search</span>
+            <span className="mobile-hide">Search</span>
           </button>
         </div>
       </div>
 
       <div className="toolbar-right">
-        <span className="toolbar-file-count">{files.length} files</span>
+        <span className="toolbar-file-count mobile-hide">{files.length} files</span>
 
         <button className="toolbar-btn" onClick={handleLoadDemo} title="Load demo project">
           <Play size={14} />
-          <span>Demo</span>
+          <span className="mobile-hide">Demo</span>
         </button>
 
-        <div className="toolbar-separator" />
+        <div className="toolbar-separator mobile-hide" />
 
         <button className="toolbar-btn" onClick={handleImportClick} disabled={importing}>
           <Upload size={14} />
-          <span>{importing ? "Importing" : "Import"}</span>
+          <span className="mobile-hide">{importing ? "Importing" : "Import"}</span>
         </button>
-        <button className="toolbar-btn" onClick={handleImportJson}>
+        <button className="toolbar-btn" onClick={handleImportJson} title="Import JSON">
           <FileJson size={14} />
-          <span>JSON</span>
+          <span className="mobile-hide">JSON</span>
         </button>
-        <button className="toolbar-btn" onClick={handleExport}>
+        <button className="toolbar-btn mobile-hide" onClick={handleExport}>
           <Download size={14} />
           <span>Export</span>
         </button>
 
-        <div className="toolbar-separator" />
+        <div className="toolbar-separator mobile-hide" />
 
-        <button className="toolbar-btn danger" onClick={handleClear}>
+        <button className="toolbar-btn danger" onClick={handleClear} title="Clear">
           <Trash2 size={14} />
-          <span>Clear</span>
+          <span className="mobile-hide">Clear</span>
         </button>
 
         <div className="toolbar-separator" />
@@ -222,13 +233,24 @@ export default function Toolbar({ activePanel, setActivePanel }: ToolbarProps) {
           {voiceRecording ? <Square size={14} /> : <Mic size={14} />}
         </button>
 
-        <div className="toolbar-separator" />
+        <div className="toolbar-separator mobile-hide" />
 
-        <button className="toolbar-btn" onClick={handleReplayTour} title="Replay first-run walkthrough">
+        <button className="toolbar-btn mobile-hide" onClick={handleReplayTour} title="Replay first-run walkthrough">
           <Compass size={14} />
           <span>Tour</span>
         </button>
       </div>
+      {/* Hidden file input for import */}
+      <input
+        type="file"
+        // @ts-ignore
+        webkitdirectory="true"
+        directory="true"
+        multiple
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileInput}
+      />
     </header>
   );
 }

@@ -801,3 +801,34 @@ body::before {
   90%  { opacity: 0.2; }
   100% { opacity: 0; transform: translateY(-10vh) translateX(30px); }
 }
+
+/* ── Mobile Layout (< 1024px) ─────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .app {
+    padding: 0 0.5rem;
+  }
+  
+  .header {
+    padding: 0.8rem 0;
+  }
+  
+  .logo-name {
+    font-size: 1.25rem;
+  }
+  
+  .logo-tree {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .main {
+    padding: 0.5rem 0 1rem;
+    height: calc(100vh - 60px);
+  }
+
+  /* Reduce noise overlay opacity on mobile for performance/readability */
+  body::before {
+    opacity: 0.3;
+  }
+}

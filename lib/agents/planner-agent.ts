@@ -148,7 +148,8 @@ async function callBedrock(
 async function callGroq(
   systemPrompt: string,
   userMessage: string,
-  context?: string
+  context?: string,
+  maxTokens: number = 800
 ): Promise<string> {
   const { baseUrl, apiKey, model } = API_CONFIG.groq;
 
@@ -176,7 +177,7 @@ async function callGroq(
       model,
       messages,
       temperature: 0.1, // Very low temperature for strict JSON output
-      max_tokens: 4096,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -266,7 +267,7 @@ export async function classifyIntent(
     try {
       response = await withSmartRetries(
         'groq', estimatedTokens,
-        () => callGroq(INTENT_CLASSIFICATION_PROMPT, message),
+        () => callGroq(INTENT_CLASSIFICATION_PROMPT, message, undefined, 10),
         onStatus
       );
     } catch (e) {
@@ -336,6 +337,23 @@ export async function generatePlan(
 
   let response: string | null = null;
 
+  // Explicitly tell the LLM which language to use for its response
+  const targetLanguageMap: Record<string, string> = {
+    'en': 'English',
+    'hi': 'Hindi',
+    'ta': 'Tamil',
+    'te': 'Telugu',
+    'bn': 'Bengali',
+    'mr': 'Marathi',
+    'gu': 'Gujarati',
+    'kn': 'Kannada',
+    'ml': 'Malayalam',
+    'pa': 'Punjabi',
+    'or': 'Odia'
+  };
+  const targetLang = targetLanguageMap[state.inputLanguage] || 'English';
+  const dynamicSystemPrompt = `${SOCRATIC_PLANNER_PROMPT}\n\n**CRITICAL REQUIREMENT:** You MUST generate your "response" text in ${targetLang}.`;
+
   const estimatedTokens = estimateTokens(translatedText + context) + 2000;
   const apiErrors: string[] = [];
 
@@ -343,7 +361,7 @@ export async function generatePlan(
     try {
       response = await withSmartRetries(
         'groq', estimatedTokens,
-        () => callGroq(SOCRATIC_PLANNER_PROMPT, translatedText, context),
+        () => callGroq(dynamicSystemPrompt, translatedText, context),
         onStatus
       );
     } catch (e) {
@@ -357,7 +375,7 @@ export async function generatePlan(
     try {
       response = await withSmartRetries(
         'bedrock', estimatedTokens,
-        () => callBedrock(SOCRATIC_PLANNER_PROMPT, translatedText, context),
+        () => callBedrock(dynamicSystemPrompt, translatedText, context),
         onStatus
       );
     } catch (e) {

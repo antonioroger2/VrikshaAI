@@ -131,19 +131,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   },
 
   addMessage: async (role, text) => {
-    let finalText = text;
-    if (role === 'agent' && get().inputLanguage !== 'en') {
-      try {
-        finalText = await translateChatMessage(text, 'en', get().inputLanguage);
-      } catch (error) {
-        console.error('Translation error for agent message:', error);
-        // Fall back to original text
-      }
-    }
     const msg: AgentMessage = {
       id: uid(),
       role,
-      text: finalText,
+      text,
       timestamp: Date.now(),
       node: get().currentNode,
     };
@@ -311,6 +302,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
                 description: s.description,
               })),
             };
+            
+            // Fix: Output the agent's actual response so the user isn't ghosted!
+            if (planResult.response) {
+              addMsg("agent", planResult.response);
+            }
           } else if (planResult?.clarifyingQuestions && planResult.clarifyingQuestions.length > 0) {
             // LLM is asking clarifying questions instead of generating a plan
             console.log('❓ LLM requesting clarification:', planResult.clarifyingQuestions);

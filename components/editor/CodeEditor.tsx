@@ -206,7 +206,7 @@ export default function CodeEditor() {
           <div className="editor-empty-sub">
             Open a file from the File Tree, or create a new one.
           </div>
-          <div className="editor-empty-shortcuts">
+          <div className="editor-empty-shortcuts mobile-hide">
             <div><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</div>
             <div><kbd>Ctrl</kbd>+<kbd>W</kbd> Close tab</div>
             <div><kbd>Ctrl</kbd>+<kbd>P</kbd> Quick open</div>

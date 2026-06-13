@@ -79,8 +79,8 @@ async function callQwenCoder(
   // List of free Qwen coder models to try in order
   const models = [
     'qwen/qwen3-coder:free',
-    'qwen/qwen2.5-coder-32b-instruct',
-    'qwen/qwen2.5-72b-instruct',
+    'qwen/qwen-2.5-coder-32b-instruct',
+    'qwen/qwen-2.5-72b-instruct',
   ];
 
   const response = await fetch(`${baseUrl}/chat/completions`, {

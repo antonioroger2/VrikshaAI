@@ -18,6 +18,7 @@ import FlashyCodeCanvas from "./voice/FlashyCodeCanvas";
 import LocalLinkTerminal from "./voice/LocalLinkTerminal";
 import EditorWorkspace from "./editor/EditorWorkspace";
 import { useRepoStore } from "@/store/repo-store";
+import { Code, MessageSquare } from "lucide-react";
 
 export default function VoiceWorkspace() {
   const DEFAULT_EDITOR_RATIO = 0.55;
@@ -28,6 +29,9 @@ export default function VoiceWorkspace() {
   const [showCanvas, setShowCanvas] = useState(false);
   const [dividerX, setDividerX] = useState<number | null>(null);
   const files = useRepoStore((s) => s.files);
+
+  // Mobile layout state
+  const [activeMobileTab, setActiveMobileTab] = useState<"editor" | "chat">("chat");
 
   // Flash the canvas overlay briefly when files change
   const [prevFileCount, setPrevFileCount] = useState(0);
@@ -70,10 +74,19 @@ export default function VoiceWorkspace() {
   const rightWidth = dividerX ? `calc(100% - ${dividerX}px - 4px)` : "45%";
 
   return (
-    <div className="voice-workspace">
+    <div 
+      className={`voice-workspace ${activeMobileTab === "editor" ? "mobile-show-editor" : "mobile-show-chat"}`}
+      style={{
+        "--desktop-left-width": leftWidth,
+        "--desktop-right-width": rightWidth
+      } as React.CSSProperties}
+    >
+      {/* Ambient Spotlight Effect (visible mainly on mobile) */}
+      <div className="mobile-spotlight" />
+
       <div className="voice-workspace-body">
         {/* ─── Left: Code Editor (55%) ─── */}
-        <div className="voice-workspace-left" style={{ width: leftWidth, flex: "none" }}>
+        <div className="voice-workspace-left">
           {/* Flashy canvas overlay when files update */}
           <AnimatePresence>
             {showCanvas && (
@@ -102,7 +115,7 @@ export default function VoiceWorkspace() {
         <div className="voice-workspace-divider" onMouseDown={handleDividerDrag} />
 
         {/* ─── Right: Socratic Conversation (45%) ─── */}
-        <div className="voice-workspace-right" style={{ width: rightWidth, flex: "none" }}>
+        <div className="voice-workspace-right">
           {/* Chat panel fills remaining space */}
           <SocraticChat orbState={orbState} setOrbState={setOrbState} />
         </div>
@@ -110,6 +123,26 @@ export default function VoiceWorkspace() {
 
       {/* ─── Bottom: Terminal drawer ─── */}
       <LocalLinkTerminal />
+
+      {/* Floating Glassmorphic Mobile Navigation */}
+      <div className="vw-mobile-nav-container">
+        <div className="vw-mobile-nav">
+          <button 
+            className={`vw-mobile-tab ${activeMobileTab === "editor" ? "active" : ""}`}
+            onClick={() => setActiveMobileTab("editor")}
+          >
+            <Code size={16} /> <span className="tab-label">Code Editor</span>
+            {activeMobileTab === "editor" && <motion.div layoutId="active-pill" className="vw-mobile-active-pill" />}
+          </button>
+          <button 
+            className={`vw-mobile-tab ${activeMobileTab === "chat" ? "active" : ""}`}
+            onClick={() => setActiveMobileTab("chat")}
+          >
+            <MessageSquare size={16} /> <span className="tab-label">Agent Chat</span>
+            {activeMobileTab === "chat" && <motion.div layoutId="active-pill" className="vw-mobile-active-pill" />}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

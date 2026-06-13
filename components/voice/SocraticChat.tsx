@@ -119,8 +119,6 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
   const [handle, setHandle] = useState<RecordingHandle | null>(null);
   const [transcribing, setTranscribing] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
-  const [translating, setTranslating] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const seenIds = useRef<Set<string>>(new Set());
 
@@ -129,47 +127,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
     setTtsLanguage(inputLanguage);
   }, [inputLanguage]);
 
-  // Translate agent messages to input language
-  useEffect(() => {
-    if (inputLanguage === 'en') {
-      setTranslatedMessages({});
-      return;
-    }
-
-    const translateMessages = async () => {
-      const newTranslations: Record<string, string> = {};
-      const toTranslate: AgentMessage[] = [];
-
-      for (const msg of messages) {
-        if (msg.role === 'agent' && !translatedMessages[msg.id] && !translating.has(msg.id)) {
-          toTranslate.push(msg);
-        }
-      }
-
-      if (toTranslate.length === 0) return;
-
-      setTranslating(prev => new Set([...prev, ...toTranslate.map(m => m.id)]));
-
-      for (const msg of toTranslate) {
-        try {
-          const translated = await translateChatMessage(msg.text, 'en', inputLanguage);
-          newTranslations[msg.id] = translated;
-        } catch (error) {
-          console.error('Translation error:', error);
-          newTranslations[msg.id] = msg.text; // Fallback to original
-        }
-      }
-
-      setTranslatedMessages(prev => ({ ...prev, ...newTranslations }));
-      setTranslating(prev => {
-        const newSet = new Set(prev);
-        toTranslate.forEach(m => newSet.delete(m.id));
-        return newSet;
-      });
-    };
-
-    translateMessages();
-  }, [messages, inputLanguage, translating]);
+  // Translation logic removed because messages are natively generated in target language.
 
   // Auto-TTS — fires whenever a new agent message arrives and autoPlay is on
   useEffect(() => {
@@ -267,36 +225,28 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
       {/* ── Header ── */}
       <div className="vw-chat-header">
         <div className="vw-chat-header-left">
-          <span className="vw-chat-title">
-            {inputLanguage === "hi" ? "भारत-AGENT" :
-             inputLanguage === "ta" ? "பாரத்-AGENT" :
-             inputLanguage === "te" ? "భారత్-AGENT" :
-             "भारत-AGENT"}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Custom Indian Flag Eye SVG */}
+            <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="28" stroke="#f5a623" strokeWidth="4" />
+              <circle cx="50" cy="50" r="20" stroke="#ffffff" strokeWidth="4" />
+              <circle cx="50" cy="50" r="12" stroke="#138808" strokeWidth="4" fill="#000080" />
+              <path d="M50 8 L50 18 M92 50 L82 50 M50 92 L50 82 M8 50 L18 50" stroke="#f5a623" strokeWidth="4" strokeLinecap="round" />
+              <path d="M20 20 L28 28 M80 20 L72 28 M80 80 L72 72 M20 80 L28 72" stroke="#4caf50" strokeWidth="4" strokeLinecap="round" />
+            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span className="vw-chat-title" style={{ fontSize: '1.4rem', letterSpacing: '0', textTransform: 'none', lineHeight: 1 }}>
+                <span style={{ color: '#f5a623' }}>भारत</span>
+                <span style={{ color: '#4caf50' }}>-AGENT</span>
+              </span>
+              <span style={{ fontSize: '0.65rem', color: '#a0aec0', letterSpacing: '0.05em' }}>
+                Voice-First AI System Architect
+              </span>
+            </div>
+          </div>
           {running && <span className="vw-running-badge">Processing</span>}
         </div>
         <div className="vw-chat-header-right">
-          {/* TTS Language chooser */}
-          <div className="vw-tts-language-chooser">
-            <span className="vw-tts-lang-label"><Languages size={13} /></span>
-            <select
-              className="vw-tts-lang-select"
-              value={inputLanguage}
-              onChange={(e) => {
-                const selected = e.target.value as SupportedLanguage;
-                setInputLanguage(selected);
-                setTtsLanguage(selected);
-              }}
-              title="Speech language (voice input and output)"
-            >
-              {(Object.keys(SUPPORTED_LANGUAGES) as SupportedLanguage[]).map((key) => (
-                <option key={key} value={key}>
-                  {SUPPORTED_LANGUAGES[key].name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Auto-TTS toggle */}
           <label className="vw-autoplay-toggle" title="Auto-play AI responses">
             <input
@@ -309,14 +259,15 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
           </label>
 
           <button
-            className="vw-clear-btn"
+            className="vw-clear-chat-btn"
             onClick={clearHistory}
-            title="Clear chat"
+            title="Clear all messages"
             disabled={messages.length === 0}
           >
             <Trash2 size={14} />
-            <span>Clear Chat</span>
+            <span className="vw-clear-text">Clear Chat</span>
           </button>
+
           {running && (
             <button className="vw-stop-btn" onClick={stopAgent}>
               <Square size={13} />
@@ -326,36 +277,57 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
         </div>
       </div>
 
-      {/* ── Tagline ── */}
-      <div className="vw-chat-tagline">
-        Voice-First System Architect Buddy... Start Building in your own language
-      </div>
-
-      {/* ── Language badge ── */}
-      <div className="vw-lang-row">
-        <span className="vw-lang-badge">Speech I/O: {SUPPORTED_LANGUAGES[inputLanguage].name}</span>
-      </div>
-
       {/* ── Messages ── */}
       <div className="vw-messages-area">
         {messages.length === 0 && (
           <motion.div
-            className="vw-empty-state"
+            className="vw-empty-state-new"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="vw-empty-icon"><Bot size={44} strokeWidth={1.5} /></div>
-            <div className="vw-empty-title">Ask VRIKSHA Anything</div>
-            <div className="vw-empty-sub">
-              Speak or type in Hindi, Tamil, Telugu, or any Indian language.
+            {/* Language Selection Grid */}
+            <div className="vw-lang-section">
+              <div className="vw-lang-section-title">
+                <Languages size={18} /> CHOOSE YOUR LANGUAGE
+              </div>
+              <div className="vw-lang-section-sub">
+                I will understand and respond in your language
+              </div>
+              <div className="vw-lang-grid">
+                {(Object.keys(SUPPORTED_LANGUAGES) as SupportedLanguage[]).map((key) => {
+                  const lang = SUPPORTED_LANGUAGES[key];
+                  return (
+                    <div 
+                      key={key} 
+                      className={`vw-lang-card ${inputLanguage === key ? 'active' : ''}`}
+                      onClick={() => {
+                        setInputLanguage(key);
+                        setTtsLanguage(key);
+                      }}
+                    >
+                      {key === 'en' ? (
+                        <div className="vw-lang-card-flag">🇬🇧</div>
+                      ) : (
+                        <div className="vw-lang-card-flag">🇮🇳</div>
+                      )}
+                      <div className="vw-lang-card-native">{lang.nativeName}</div>
+                      <div className="vw-lang-card-english">{lang.name}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="vw-chips">
-              {CHIPS.map((chip) => (
-                <button key={chip} className="vw-chip" onClick={() => setInput(chip)}>
-                  {chip}
-                </button>
-              ))}
+
+            {/* Sample Prompts / Chips */}
+            <div className="vw-chips-section" style={{ padding: '0 1.5rem 2rem' }}>
+              <div className="vw-chips">
+                {CHIPS.map((chip) => (
+                  <button key={chip} className="vw-chip" onClick={() => setInput(chip)}>
+                    {chip}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
@@ -374,12 +346,12 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
                 {msg.role === "user" ? "You" : msg.role === "agent" ? "VRIKSHA" : "System"}
               </p>
               <div className="vw-bubble-text">
-                <RichText text={msg.role === 'agent' && inputLanguage !== 'en' ? (translatedMessages[msg.id] || msg.text) : msg.text} />
+                <RichText text={msg.text} />
               </div>
               {msg.role === "agent" && (
                 <button
                   className={`vw-tts-btn ${playingId === msg.id ? "vw-tts-btn--active" : ""}`}
-                  onClick={() => playSpeech(msg.role === 'agent' && inputLanguage !== 'en' ? (translatedMessages[msg.id] || msg.text) : msg.text, msg.id)}
+                  onClick={() => playSpeech(msg.text, msg.id)}
                   title="Play audio"
                 >
                   {playingId === msg.id ? <Square size={13} /> : <Volume2 size={13} />}
