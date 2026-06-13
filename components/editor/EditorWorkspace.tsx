@@ -115,10 +115,10 @@ export default function EditorWorkspace() {
       <div className="workspace-statusbar">
         <div className="statusbar-left">
           <span className="status-dot" />
-          <span>VRIKSHA.ai</span>
-          <span className="statusbar-sep">·</span>
-          <span>Local-first</span>
-          <span className="statusbar-sep">·</span>
+          <span className="mobile-hide">VRIKSHA.ai</span>
+          <span className="statusbar-sep mobile-hide">·</span>
+          <span className="mobile-hide">Local-first</span>
+          <span className="statusbar-sep mobile-hide">·</span>
           <span className="mobile-hide">IndexedDB</span>
         </div>
         <div className="statusbar-right">

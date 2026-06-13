@@ -19,6 +19,7 @@ import LocalLinkTerminal from "./voice/LocalLinkTerminal";
 import EditorWorkspace from "./editor/EditorWorkspace";
 import { useRepoStore } from "@/store/repo-store";
 import { Code, MessageSquare } from "lucide-react";
+import { loadLocalKeys } from "@/lib/api-config";
 
 export default function VoiceWorkspace() {
   const DEFAULT_EDITOR_RATIO = 0.55;
@@ -32,6 +33,11 @@ export default function VoiceWorkspace() {
 
   // Mobile layout state
   const [activeMobileTab, setActiveMobileTab] = useState<"editor" | "chat">("chat");
+
+  // Load API keys from local storage on mount
+  useEffect(() => {
+    loadLocalKeys();
+  }, []);
 
   // Flash the canvas overlay briefly when files change
   const [prevFileCount, setPrevFileCount] = useState(0);

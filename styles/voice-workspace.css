@@ -486,26 +486,27 @@
 
 .vw-bubble {
   padding: 0.85rem 1.1rem;
-  border-radius: 14px;
-  max-width: 75%;
-  background: rgba(30, 58, 31, 0.3);
+  border-radius: 6px;
+  max-width: 85%;
+  background: rgba(15, 20, 25, 0.6);
   border: 1px solid rgba(76, 175, 80, 0.12);
   backdrop-filter: blur(6px);
   position: relative;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .vw-bubble--user {
   align-self: flex-end;
-  background: rgba(245, 166, 35, 0.08);
+  background: rgba(245, 166, 35, 0.05);
   border-color: rgba(245, 166, 35, 0.18);
-  border-bottom-right-radius: 4px;
+  border-left: 3px solid rgba(245, 166, 35, 0.8);
 }
 
 .vw-bubble--agent {
   align-self: flex-start;
-  background: rgba(30, 58, 31, 0.35);
+  background: rgba(30, 58, 31, 0.15);
   border-color: rgba(76, 175, 80, 0.15);
-  border-bottom-left-radius: 4px;
+  border-left: 3px solid var(--lime);
 }
 
 .vw-bubble--system {
@@ -1526,7 +1527,7 @@
     display: flex;
     justify-content: center;
     position: absolute;
-    bottom: 20px;
+    bottom: 50px;
     left: 0;
     width: 100%;
     z-index: 50;
@@ -1536,17 +1537,41 @@
 
   .vw-mobile-nav {
     display: flex;
-    background: rgba(15, 10, 3, 0.6);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(168, 224, 99, 0.2);
+    position: relative;
     border-radius: 30px;
     padding: 0.35rem;
     gap: 0.25rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(168, 224, 99, 0.05) inset;
     width: 100%;
     max-width: 320px;
     pointer-events: auto;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  }
+
+  /* The spinning starlight border */
+  .vw-mobile-nav::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; right: -50%; bottom: -50%;
+    background: conic-gradient(from 0deg, transparent 70%, rgba(168, 224, 99, 0.8) 85%, rgba(245, 166, 35, 1) 100%);
+    animation: starlight-spin 3s linear infinite;
+    z-index: 0;
+  }
+
+  /* Inner mask to create the hollow border effect */
+  .vw-mobile-nav::after {
+    content: '';
+    position: absolute;
+    inset: 1.5px;
+    background: rgba(15, 10, 3, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 28.5px;
+    z-index: 1;
+  }
+
+  @keyframes starlight-spin {
+    100% { transform: rotate(360deg); }
   }
 
   .vw-mobile-tab {
@@ -1584,6 +1609,31 @@
 
   .tab-label {
     letter-spacing: 0.05em;
+  }
+
+  /* Smaller Language Tiles on Mobile */
+  .vw-lang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+    gap: 0.4rem;
+    padding-bottom: 0.5rem;
+  }
+  .vw-lang-card {
+    min-width: 0;
+    padding: 0.5rem 0.2rem;
+    border-radius: 10px;
+    gap: 0.2rem;
+  }
+  .vw-lang-card-flag {
+    font-size: 14px;
+    width: 20px;
+    height: 14px;
+  }
+  .vw-lang-card-native {
+    font-size: 0.75rem;
+  }
+  .vw-lang-card-english {
+    font-size: 0.55rem;
   }
 
   /* Layout Adjustments */

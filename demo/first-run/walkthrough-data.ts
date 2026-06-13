@@ -204,6 +204,35 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     }
   },
   {
+    id: "byok",
+    eyebrow: "Bring Your Own Key (BYOK)",
+    title: "Securely configure your API keys locally",
+    summary:
+      "VRIKSHA doesn't send your keys to our servers. Keys are stored locally in your browser's localStorage and injected into API requests.",
+    highlights: [
+      "Groq for Planning and Voice ASR.",
+      "Qwen/OpenRouter for AST-aware code editing.",
+      "Gemini for Reflection and STT tasks.",
+    ],
+    modules: [
+      {
+        label: "API config",
+        file: "lib/api-config.ts",
+        note: "Extracts keys dynamically from localStorage.",
+      },
+      {
+        label: "BYOK Inline Panel",
+        file: "components/BYOKInline.tsx",
+        note: "Allows simple, secure key configuration on the home screen.",
+      },
+    ],
+    spotlight: {
+      selector: ".vw-byok-section",
+      position: "top",
+      text: "Genie says: Plug in your own keys here to start building immediately!"
+    }
+  },
+  {
     id: "voice",
     eyebrow: "Voice + Multilingual",
     title: "Voice, translation, and explanation layers round out the product",

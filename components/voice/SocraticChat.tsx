@@ -25,6 +25,7 @@ import {
   type RecordingHandle,
 } from "@/lib/voice-input";
 import type { OrbState } from "./VoiceOrb";
+import BYOKInline from "../BYOKInline";
 
 // ── Language → BCP-47 TTS voice tag ─────────────────────────────────────────
 
@@ -97,6 +98,13 @@ const NODE_WAIT_LABEL: Partial<Record<Exclude<AgentMessage["node"], undefined>, 
   responding: "Preparing final response",
 };
 
+const ROLES = [
+  "Full-Stack Product Builder",
+  "Autonomous Cloud Architect",
+  "Self-Correcting Code Editor",
+  "Multilingual Voice Workspace"
+];
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function SocraticChat({ orbState, setOrbState }: Props) {
@@ -119,8 +127,17 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
   const [handle, setHandle] = useState<RecordingHandle | null>(null);
   const [transcribing, setTranscribing] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [roleIndex, setRoleIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const seenIds = useRef<Set<string>>(new Set());
+
+  // Rotating subtitle
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRoleIndex((i) => (i + 1) % ROLES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   // Keep speech output aligned with selected conversation language.
   useEffect(() => {
@@ -140,7 +157,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
     }
     // Mark all as seen regardless of role
     messages.forEach((m) => seenIds.current.add(m.id));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, autoPlay]);
 
   const playSpeech = useCallback(
@@ -237,10 +254,10 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span className="vw-chat-title" style={{ fontSize: '1.4rem', letterSpacing: '0', textTransform: 'none', lineHeight: 1 }}>
                 <span style={{ color: '#f5a623' }}>भारत</span>
-                <span style={{ color: '#4caf50' }}>-AGENT</span>
+                <span style={{ color: '#4caf50' }}>-Code Bot</span>
               </span>
               <span style={{ fontSize: '0.65rem', color: '#a0aec0', letterSpacing: '0.05em' }}>
-                Voice-First AI System Architect
+                Voice-First Full-Stack Coder
               </span>
             </div>
           </div>
@@ -286,20 +303,34 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
+            {/* BYOK Configuration Inline */}
+            <BYOKInline />
+
             {/* Language Selection Grid */}
             <div className="vw-lang-section">
               <div className="vw-lang-section-title">
                 <Languages size={18} /> CHOOSE YOUR LANGUAGE
               </div>
-              <div className="vw-lang-section-sub">
-                I will understand and respond in your language
+              <div className="vw-lang-section-sub" style={{ height: '20px', position: 'relative' }}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={roleIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ position: 'absolute', width: '100%', left: 0 }}
+                  >
+                    {ROLES[roleIndex]}
+                  </motion.div>
+                </AnimatePresence>
               </div>
-              <div className="vw-lang-grid">
+              <div className="vw-lang-grid" style={{ marginTop: '1rem' }}>
                 {(Object.keys(SUPPORTED_LANGUAGES) as SupportedLanguage[]).map((key) => {
                   const lang = SUPPORTED_LANGUAGES[key];
                   return (
-                    <div 
-                      key={key} 
+                    <div
+                      key={key}
                       className={`vw-lang-card ${inputLanguage === key ? 'active' : ''}`}
                       onClick={() => {
                         setInputLanguage(key);
@@ -320,7 +351,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             </div>
 
             {/* Sample Prompts / Chips */}
-            <div className="vw-chips-section" style={{ padding: '0 1.5rem 2rem' }}>
+            <div className="vw-chips-section" style={{ padding: '0 1.5rem' }}>
               <div className="vw-chips">
                 {CHIPS.map((chip) => (
                   <button key={chip} className="vw-chip" onClick={() => setInput(chip)}>
@@ -418,7 +449,7 @@ export default function SocraticChat({ orbState, setOrbState }: Props) {
             value={transcribing ? "Transcribing..." : input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your goal, or tap the mic…"
+            placeholder="vriksha-agent:~$ enter goal or prompt..."
             rows={2}
             disabled={running || transcribing}
           />

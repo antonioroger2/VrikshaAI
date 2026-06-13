@@ -103,7 +103,30 @@ export const API_CONFIG = {
     baseUrl: process.env.UPSTASH_REDIS_REST_URL || '',
     token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
   },
-} as const;
+};
+
+export function loadLocalKeys() {
+  if (typeof window !== 'undefined') {
+    const bedrockKey = localStorage.getItem('vriksha_bedrock_key');
+    if (bedrockKey) API_CONFIG.bedrock.apiKey = bedrockKey;
+
+    const groqKey = localStorage.getItem('vriksha_groq_key');
+    if (groqKey) {
+      API_CONFIG.groq.apiKey = groqKey;
+      API_CONFIG.groqAsr.apiKey = groqKey;
+    }
+
+    const qwenKey = localStorage.getItem('vriksha_qwen_key');
+    if (qwenKey) API_CONFIG.qwen.apiKey = qwenKey;
+
+    const googleTtsKey = localStorage.getItem('vriksha_google_tts_key');
+    if (googleTtsKey) API_CONFIG.googleTts.apiKey = googleTtsKey;
+
+    const geminiKey = localStorage.getItem('vriksha_gemini_key');
+    if (geminiKey) API_CONFIG.gemini.apiKey = geminiKey;
+  }
+}
+
 
 // ── Supported Languages ──────────────────────────────────────────────────────
 
